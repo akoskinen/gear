@@ -1,25 +1,27 @@
-# Product Outline (draft v0.1)
+# Product Outline (draft v0.2)
 
-A working structure for the gear tracking and rider management app, derived from the [initial brief](00-brief.md). Everything here is a proposal to be refined together, view by view. Sections marked **Open** need a decision before screens are designed.
+A working structure for the gear tracking and rider management app, derived from the [initial brief](00-brief.md). Everything here is a proposal to be refined together, view by view. Decisions taken so far are in section 5; remaining open points are marked **Open**.
 
 ## 1. Who uses it
 
 | Role | Person(s) | Primary device | Primary need |
 |---|---|---|---|
-| Logistics manager | Axel | iPad / laptop | Know where every item is, what state it is in, and what each rider needs for the next event |
+| Logistics manager | Axel | Laptop (web) and iPad | Know where every item is, what state it is in, and what each rider needs for the next event |
 | Core rider | Manel, Antti, Pete, Carmine | iPhone | Reserved gear is guaranteed; state needs ahead of time; quick check-out at the tent |
 | Team / guest rider | Other riders at an event | iPhone, shared iPad | Find out what is available; check gear out and back in |
-| Kiosk | Shared iPad at the event tent | iPad (mounted, possibly offline) | Large-button check-out / check-in, no login friction |
+| Kiosk | Shared iPad at the event tent | iPad (mounted, possibly offline) | Large-button check-out / check-in; rider identifies with a PIN |
 
 Riders are assigned a **tier** (core, team, guest). Tier drives allocation rules, not screen access.
 
 ## 2. Core concepts (data model, first pass)
 
+- **Team.** The tenant. Every other record belongs to exactly one team. Lift Foils is the first team; other teams join later through efoil.racing. A person can belong to more than one team (e.g. a rider who is also on a national squad).
+- **Member.** A person's membership in a team: role (manager, rider), tier (core, team, guest), display name, and a kiosk PIN (4 digits, unique within the team, set by the manager).
 - **Event.** Name, location, start/end dates, type (race, training camp, testing day, demo), status (planned, packing, live, wrap-up, closed). Every operational action belongs to an event, except standing inventory at HQ.
 - **Location.** HQ Martinchel; an event site (e.g. Menton); a vehicle / in transit; "with rider". A gear item has exactly one current location.
-- **Gear item.** One physical, labeled object. Category: board, mast, front wing, stabilizer / rear wing, fuselage, propulsion unit (motor + prop), battery, controller / remote, charger, spare part. Fields: label code (what is printed on the item), model / spec (e.g. "170 front wing"), serial, home base, condition status (ready, needs check, in repair, retired), notes, photo. Batteries and propulsion units also carry firmware version and, for batteries, charge state and cycle count.
+- **Gear item.** One physical, labeled object. Category: board, mast, front wing, stabilizer / rear wing, fuselage, propulsion unit (motor + prop), battery, controller / remote, charger, spare part. Fields: label code (what is printed on the item; short, human-readable, and stable so the same code can later be etched as a QR), model / spec (e.g. "170 front wing"), serial, home base, condition status (ready, needs check, in repair, retired), notes, photo. Batteries and propulsion units also carry firmware version and, for batteries, charge state and cycle count.
 - **Kit (optional grouping).** A named set of items that usually travel together, e.g. "Antti race setup". Riders swap wings constantly, so tracking stays at item level; a kit is only a convenience for packing and reservations.
-- **Reservation.** Gear item × rider × scope (standing, or one event). This is the "priority tier" lock from the brief: a reserved item can only be checked out by its rider, or released by Axel.
+- **Reservation.** Gear item × rider × event, set by the manager while planning the event. This is the "priority tier" lock from the brief: a reserved item can only be checked out by its rider, or released by the manager. Reservations expire when the event closes. The manager can copy last event's reservations as a starting point.
 - **Rider request (pre-event inquiry).** Rider × event: wanted gear (from the catalogue or free text), firmware preferences, spare parts, notes. Status: submitted, seen by Axel, planned, fulfilled, declined with reason.
 - **Event manifest.** The list of gear items and non-gear essentials that go to a given event, with packed / loaded / on site / returned states. Built from reservations, rider requests, and Axel's judgement.
 - **Essentials checklist.** Non-gear items per event (tents, water, lunch, tools, first aid, generator, ...) from a reusable template so the routine is standardized.
@@ -46,8 +48,8 @@ Riders are assigned a **tier** (core, team, guest). Tier drives allocation rules
 
 ### Kiosk (shared iPad at the tent)
 - Two big actions: **Take gear** and **Return gear**.
-- Identify rider (tap name, or scan a rider badge; see Open questions).
-- Identify item (scan label, or pick from a large-tile list filtered to what this rider may take).
+- Identify rider: tap your name on the roster grid, then enter your 4-digit PIN.
+- Identify item: pick from a large-tile list by category and label code, filtered to what this rider may take. QR scanning is a later addition once labels are etched.
 - Confirmation screen, then back to idle. No login, no menus. Works offline and syncs later.
 - Reserved items either do not appear for other riders or show a locked state with the owner's name.
 
@@ -63,21 +65,27 @@ Riders are assigned a **tier** (core, team, guest). Tier drives allocation rules
 2. Otherwise, if the item is at the event site and status is ready, any rostered rider can check it out.
 3. Otherwise the kiosk shows "ask Axel" and the request is logged for Axel to see.
 4. Every check-out and check-in writes a movement log entry with rider, item, event, and timestamp.
-5. Core riders' standing reservations carry over between events; event-only reservations expire when the event closes.
+5. Reservations are per event and expire when the event closes. The manager sets them while planning, typically by copying the previous event's reservations and adjusting.
 
-## 5. Open questions
+## 5. Decisions
 
-- **Open: platform.** Native iOS / iPadOS for riders and the kiosk is the natural fit. Does Axel also need a web dashboard on a laptop for packing at HQ, or is iPad enough?
-- **Open: offline.** Race sites often have poor connectivity. Proposal: the kiosk and rider app work offline and sync; the movement log is designed to merge without conflicts.
-- **Open: labels and scanning.** iPads do not read NFC tags, iPhones do. Options: engraved or laser-etched QR codes read by the iPad camera; NFC tags read by iPhones only; or no scanning at the kiosk and riders pick from large tiles by label code. This decision shapes the kiosk flow.
-- **Open: rider identity at the kiosk.** Tap your name from a roster grid, a short PIN, or a personal QR / NFC badge.
-- **Open: gear granularity.** Confirm the category list above matches how the team actually thinks about a setup, and whether kits are worth having in v1.
-- **Open: reservations.** Are core riders' reservations standing (always) or set per event by Axel?
-- **Open: tenancy.** Built for the Lift Foils team only, or as a tool other teams could use through efoil.racing later? This affects data design from day one.
-- **Open: charger integration.** Keep as a phase-2 item behind manual charge entry until the Bluetooth firmware question is answered.
+| # | Question | Decision | Consequence |
+|---|---|---|---|
+| 1 | Platform | Native iOS / iPadOS for riders and the kiosk. Axel also gets a web dashboard for the laptop. | One shared backend with an API; two client codebases (SwiftUI app, web app). The web dashboard is the primary planning surface, the iPad the primary event-day surface. |
+| 2 | Rider identity at kiosk | 4-digit PIN | Roster grid then PIN pad. No accounts needed on the shared iPad. PINs are per team and set by the manager. |
+| 3 | Labels | No scanning in v1. Etched QR codes later. | Label codes must be short, readable, and stable. The kiosk picks items from tiles now; scanning slots in as an alternative input later without changing the flow. |
+| 4 | Reservations | Set per event by Axel | Reservation is event-scoped. Planning view needs a fast "copy from last event" action. |
+| 5 | Tenancy | Other teams should be able to use it later | Team is the top-level entity from day one. All data is partitioned by team; people can belong to several teams. Authentication and roles are per team. |
+| 6 | Gear categories | Confirmed | Category list in section 2 stands. |
+
+## 5b. Remaining open points
+
+- **Open: offline.** Race sites often have poor connectivity. Proposal: the kiosk and rider app work offline and sync; the movement log is designed to merge without conflicts. Assumed yes unless told otherwise.
+- **Open: charger integration.** Kept as a phase-3 item behind manual charge entry until the Bluetooth firmware question is answered.
+- **Open: technology stack.** Recommendation: a hosted Postgres backend with built-in auth and per-team row-level security (Supabase or similar), SwiftUI for iPhone and iPad, and a web dashboard sharing the same API. To be confirmed before build starts.
 
 ## 6. Suggested phasing
 
-1. **Phase 1, replace the spreadsheet:** events, inventory, manifest, essentials checklist, movement log, kiosk check-out / check-in, rider requests.
+1. **Phase 1, replace the spreadsheet:** teams and members, events, inventory, manifest, essentials checklist, per-event reservations, movement log, kiosk check-out / check-in with PIN, rider requests. Web dashboard for Axel plus iPad kiosk.
 2. **Phase 2, rider self-service:** rider app with notifications, reservations visible to riders, battery state entered manually.
-3. **Phase 3, hardware:** charger Bluetooth integration, scanning improvements, label printing workflow.
+3. **Phase 3, hardware and scale:** charger Bluetooth integration, QR scanning at the kiosk, label etching workflow, onboarding for additional teams.
