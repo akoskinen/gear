@@ -155,7 +155,7 @@ The kiosk is a separate iPad screen but it depends on hub data:
 
 ## 11. Next specs to write
 
-1. Kiosk flow (iPad): idle → roster grid → PIN → take or return → item picker → confirmation.
+1. Kiosk flow (iPad): see [03-kiosk-spec.md](03-kiosk-spec.md).
 2. Inventory view and item detail.
 3. Rider app: my events, my requests, my gear.
 4. Team and member settings, including onboarding a second team.
