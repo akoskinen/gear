@@ -188,7 +188,7 @@ Tile states, in priority order:
 ## 4. Rules
 
 1. Only members on the event roster with status Confirmed appear on the roster grid.
-2. Only manifest items with location On site and status Ready are offered. A reserved item is offered only to its rider.
+2. Only team-owned manifest items with location On site and status Ready are offered. A reserved item is offered only to its rider. Rider-owned items on the manifest for transport never appear on the kiosk; a rider using their own board and a team battery checks out only the battery.
 3. Every take and return writes one movement log entry per item: team, event, item, rider, direction, timestamp, kiosk device id, condition chips, and whether it was recorded offline.
 4. A take moves the item's location to "with rider"; a return moves it to "event site".
 5. Taking an item reserved for someone else is not possible from the kiosk. The attempt is logged as an availability request so the manager sees demand.

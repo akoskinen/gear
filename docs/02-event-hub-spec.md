@@ -64,6 +64,7 @@ Sources of attention items:
 - Rider request submitted or changed and not yet planned.
 - Reserved item whose status is not ready.
 - Manifest item with no location, or located at HQ after departure.
+- Setup matrix demand for a category exceeds the number of ready items on the manifest.
 - Battery below threshold in the current phase context; batteries waiting for a free charger; a battery charging for twice its expected time.
 - Essentials checklist item unconfirmed within its lead time.
 - During Live: item checked out for longer than the team's overdue window (default 6 hours), or checked out at end of day.
@@ -77,6 +78,7 @@ Sources of attention items:
 - Actions: invite member, add a guest rider for this event, confirm on behalf of a rider, set or reset PIN.
 - Tapping a card opens the rider drawer: their requests for this event, their reservations, their current check-outs (during Live), and their history.
 - Sorted core riders first, then by name.
+- **Setup matrix** view toggle: riders down the side, slots across the top (board, mast and fuselage, front wing, stabilizer, propulsion, battery, controller), each cell "own" or "team" taken from the rider's request for this event (defaulting to their declared setup). Column totals show demand: "Boards 4 · Wings 7 · Batteries 10 riders × 3/day". The matrix is the first thing to check when starting the manifest, and its totals are compared against the manifest's counts per category so under-packing shows up before departure.
 
 ### 6.2 Requests
 
@@ -97,6 +99,7 @@ The list of everything going to this event.
 - Header actions: **Add items** (search inventory with filters by category and location, multi-select), **Copy from event…** (pull the manifest and reservations from a previous event, then adjust), **Print packing list**.
 - The packed counter in the status strip is derived from this tab.
 - Locked rows: an item reserved for a rider shows a small lock and the rider's name. Only the manager can change or release it.
+- **Rider-owned items for transport** appear in a separate section at the bottom, marked with the owner's name. They have packing states like any other row so Axel knows they are in the van, but they never count toward stock or reach the kiosk. Added via "Add items" with an owner filter, or from a request where the rider asked for transport.
 
 ### 6.4 Essentials
 

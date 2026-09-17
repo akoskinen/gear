@@ -7,6 +7,7 @@ Related: [product outline](01-product-outline.md), [event hub](02-event-hub-spec
 ## 1. Purpose and principles
 
 - **One row per physical object.** If it has its own label, it has its own record. Sets and setups are groupings on top, never a substitute.
+- **Team gear first.** Rider-owned gear can be registered, with the rider as owner, so it can ride in the van on a manifest. It is otherwise invisible: not on the kiosk, not reservable, not in stock counts, hidden from the default list.
 - **Location and status are always known.** Every item has exactly one current location and one condition status. Both change only through logged actions, so the history is complete.
 - **Fast to scan, deep on demand.** The list is dense and filterable. The detail view holds everything about one item, including its full history.
 - **Label code is the identity riders use.** It is short, readable from across the tent, and stable for the life of the item so it can be etched later.
@@ -40,13 +41,14 @@ On the iPad the category rail collapses into a segmented filter above the list. 
 
 ## 3. Item list
 
-Columns: label code, model / spec, current location (place and, when with a rider, the rider's name), status, reserved-for at the current or next event, last movement. Batteries add charge and cycle count; propulsion units and batteries add firmware version.
+Columns: label code, model / spec, owner (blank for team gear, rider name otherwise), current location (place and, when with a rider, the rider's name), status, reserved-for at the current or next event, last movement. Batteries add charge and cycle count; propulsion units and batteries add firmware version.
 
 Filters:
 
 - **Category** from the rail. Counts update with other filters applied.
 - **Location:** HQ (with sub-locations such as racks or workshop), a named event site, a vehicle, with rider, unknown.
 - **Status:** Ready, Needs check, In repair, Retired.
+- **Owner:** Team (default), or a member. The default list shows team gear only; choosing a member shows their registered gear.
 - **Search** matches label code and model. Typing "170" finds all 170 front wings; typing "BAT-0" finds batteries 01 to 09.
 - Saved views: "Going to next event", "At HQ and ready", "Maintenance queue". Saved views are per team and editable.
 
@@ -95,7 +97,7 @@ Sections:
 
 ## 5. Adding items
 
-- **Add item:** pick category first, then the form shows only that category's fields. Label code is suggested from the team's scheme (see section 6) and can be overridden if unique. Location defaults to HQ. Status defaults to Ready.
+- **Add item:** pick category first, then the form shows only that category's fields. Label code is suggested from the team's scheme (see section 6) and can be overridden if unique. Location defaults to HQ. Status defaults to Ready. Owner defaults to Team; choosing a member marks the item rider-owned, and label codes for rider-owned items take the owner's initials as a prefix (for example AK-BRD-01) so they are never confused with team stock. The rider-owned add flow is a manager action in v1; riders registering their own gear from the app is a later addition.
 - **Add several:** after saving, "Add another like this" pre-fills model and location and increments the label code. Adding twelve identical batteries takes twelve taps, not twelve forms.
 - **Import:** CSV with columns matching the list. This is how Axel's existing spreadsheet comes in. Import shows a preview with detected problems (duplicate codes, unknown categories) before committing. Imported items get a history entry "Imported from spreadsheet".
 
@@ -153,6 +155,7 @@ A saved view with extra columns: reason, days in state, expected back. Sorted by
 - Inventory is strictly per team. A person who manages two teams switches with the team switcher and never sees a merged list.
 - Label code schemes and location hierarchies are per team settings.
 - Lending gear between teams is not supported in v1. If it happens, the lending team sets the location to a vehicle or event site with a note.
+- A rider-owned item belongs to the team's inventory it was registered in, even though the owner is a person. A rider in two teams who wants their board transported by both registers it in both; there is no cross-team item in v1.
 
 ## 12. Edge cases
 

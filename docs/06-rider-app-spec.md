@@ -49,11 +49,18 @@ This is the pre-event inquiry from the brief, made into a form that takes under 
 
 ### 4.2 Request form
 
-One request per rider per event, editable until Axel marks it Planned. It has four sections, each optional:
+One request per rider per event, editable until Axel marks it Planned. It opens with a setup review, then four sections, each optional:
 
 ```
 ┌────────────────────────────────────────┐
 │  Menton Open — what do you need?       │
+│                                        │
+│  YOUR SETUP        Same as usual ✓     │
+│  Board · own   Prop · own              │
+│  Wing · team   Battery · team          │
+│  Mast · own    Controller · own        │
+│  [ Change for this event ]             │
+│  Transport my gear in the van?  [ No ] │
 │                                        │
 │  GEAR                                  │
 │  [ Front wing 170 ]  [ Mast 72 ]  [+]  │
@@ -75,6 +82,7 @@ One request per rider per event, editable until Axel marks it Planned. It has fo
 └────────────────────────────────────────┘
 ```
 
+- **Setup review** shows the rider's declared setup (section 6) with a per-event override. Slots marked "own" are removed from the gear section below; slots marked "team" are what the request is about. A rider who brings their own board and propulsion sees a request form that only asks about wings, batteries, and spares. "Transport my gear in the van?" tells Axel whether the rider's own items need loading; answering yes lets Axel add them to the manifest's transport section.
 - **Gear** is picked from the team's catalogue of models, not specific items. A rider asks for "a 170 front wing"; Axel decides which one and reserves it. Core riders may name a specific item ("FW-170-02, the one I used in Portugal") in the free text.
 - **Batteries** asks for a count per race day rather than specific batteries, plus a firmware note. This feeds Axel's charger planning.
 - **Spares** are chips from a short team list plus free text.
@@ -109,6 +117,7 @@ Reached from the rider's avatar on the next event card.
 - Teams the rider belongs to, with the active one marked. Joining a team is by invitation link from that team's manager.
 - Kiosk PIN: shown once after Axel sets it, and changeable here with the old PIN. This keeps Axel out of the loop for PIN changes while keeping the manager's reset path.
 - Notification toggles: request updates, event invitations, reservation changes, end-of-day reminder. All on by default.
+- **My setup:** one row per slot (board, mast and fuselage, front wing, stabilizer, propulsion, battery, controller), each "mine" or "from the team". Owned slots take a short description ("Lift 4'4 custom"). Entered once, rarely changed, and pre-fills every request. A rider who uses the full team setup marks every slot "from the team".
 - Preferred wing sizes and mast length, used to pre-fill the request form.
 
 ## 7. Notifications
