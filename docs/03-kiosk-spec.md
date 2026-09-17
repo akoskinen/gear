@@ -162,7 +162,7 @@ Tile states, in priority order:
 | Charging / needs check / in repair | Grey, state label | Shows the state. No action. |
 | Not on site (still at HQ or in vehicle) | Not shown | |
 
-- Batteries show charge percentage from the latest reading; other items show model or size.
+- Batteries show charge percentage, marked "est." when estimated from charging time, and a ready time while charging; other items show model or size.
 - Sorted: reserved for you, then available by label code, then greyed states.
 - Multi-select. The tray shows selected codes and the confirm button reads "Take n items".
 
@@ -176,12 +176,13 @@ Tile states, in priority order:
 ```
 
 - "All good" completes the return. "Something's off" shows chips per item: Damaged, Leaking, Loose, Low power, Noise, Other. Multiple chips allowed. Items with a chip are set to "needs check" and appear in the hub's Needs attention. Free text is not offered on the kiosk; Axel follows up in person.
-- Returned batteries are automatically set to "needs charge" regardless of condition, so the Live board shows them in the charging queue.
+- For each battery in the selection, one extra step comes first: the rider taps the remaining percentage on a 0–100 row in ten-percent steps (or "Don't know"), then "On charger" or "On the shelf". "On charger" starts the charge estimate. See [battery charge estimation](05-battery-charge-estimation.md).
 
 ### 3.8 Confirmation
 
 - Full-screen, one sentence, large: "Pete took BAT-02 and FW-170-2" or "Pete returned 3 items". Green check for a completed action, amber for a return with a flagged condition.
 - Offline: a small line "Saved on this iPad, will sync when online". Never a warning tone.
+- If the take included a battery, the confirmation carries one optional line, "BAT-02 shows:" with the percentage row and Skip. Skipping is the default when the screen auto-dismisses.
 - Auto-returns to Idle after 4 seconds, or on tapping Done. There is intentionally no "take more" from here; the rider taps their name again if they forgot something. Sessions must end cleanly.
 
 ## 4. Rules
@@ -226,7 +227,7 @@ Nothing else. Planning stays in the hub.
 - **Rider returns someone else's gear.** Not possible from their own session in v1. They tap the other rider's name and would need that PIN. Instead, Axel force-returns from the hub. Considered for v2 as "return any item" restricted to non-reserved gear.
 - **Item breaks on the water.** Rider returns it with the Damaged chip. It leaves availability immediately and appears in Needs attention.
 - **Rider forgets to return at end of day.** Overdue rule in the hub flags it. Kiosk itself does nothing special.
-- **Battery reading stale.** Tiles show the percentage with "3 h ago" in small text once a reading is older than an hour.
+- **Battery percentage unknown.** A battery returned with "Don't know" and not charging shows "? %" and is greyed until Axel sets a reading.
 - **Guest rider arrives on race morning.** Axel adds them on the roster from the hub or iPad, sets a PIN, and they appear on the kiosk grid after sync. Offline, Axel does this from the kiosk manager menu; the record syncs later.
 
 ## 9. Out of scope for v1
@@ -235,7 +236,7 @@ Nothing else. Planning stays in the hub.
 - Rider-to-rider transfer.
 - Multiple kiosks per event.
 - Rider photos beyond an optional avatar for the roster grid.
-- Charger integration; battery percentages are manual readings entered in the hub.
+- Charger integration; battery percentages come from rider readings at return and the charge-time estimate, see [05-battery-charge-estimation.md](05-battery-charge-estimation.md).
 
 ## 10. Next specs
 

@@ -26,7 +26,8 @@ Riders are assigned a **tier** (core, team, guest). Tier drives allocation rules
 - **Event manifest.** The list of gear items and non-gear essentials that go to a given event, with packed / loaded / on site / returned states. Built from reservations, rider requests, and Axel's judgement.
 - **Essentials checklist.** Non-gear items per event (tents, water, lunch, tools, first aid, generator, ...) from a reusable template so the routine is standardized.
 - **Movement log.** Append-only record of every check-out, check-in, transfer, and status change: who, which item, which event, when, from where to where. This replaces the Excel sheet as the source of truth.
-- **Battery reading.** Time-stamped charge level per battery, entered manually first, from chargers via Bluetooth later if feasible.
+- **Battery reading.** Time-stamped charge level per battery, reported by the rider at return (and optionally at take), plus charging sessions with start and end times. Combined with per-type charge times this gives an estimated charge and ready time without charger integration. See [05-battery-charge-estimation.md](05-battery-charge-estimation.md).
+- **Battery type.** Model name plus charge model: time from 0 to 80 % and from 80 to 100 %.
 
 ## 3. Views (first pass)
 
@@ -77,15 +78,15 @@ Riders are assigned a **tier** (core, team, guest). Tier drives allocation rules
 | 4 | Reservations | Set per event by Axel | Reservation is event-scoped. Planning view needs a fast "copy from last event" action. |
 | 5 | Tenancy | Other teams should be able to use it later | Team is the top-level entity from day one. All data is partitioned by team; people can belong to several teams. Authentication and roles are per team. |
 | 6 | Gear categories | Confirmed | Category list in section 2 stands. |
+| 7 | Battery charge tracking | Estimate from rider-reported percentage at return, charging start time, and known charge times per battery type | No charger Bluetooth dependency. Kiosk asks one extra tap per battery at return. Charger integration is no longer planned. |
 
 ## 5b. Remaining open points
 
 - **Open: offline.** Race sites often have poor connectivity. Proposal: the kiosk and rider app work offline and sync; the movement log is designed to merge without conflicts. Assumed yes unless told otherwise.
-- **Open: charger integration.** Kept as a phase-3 item behind manual charge entry until the Bluetooth firmware question is answered.
 - **Open: technology stack.** Recommendation: a hosted Postgres backend with built-in auth and per-team row-level security (Supabase or similar), SwiftUI for iPhone and iPad, and a web dashboard sharing the same API. To be confirmed before build starts.
 
 ## 6. Suggested phasing
 
 1. **Phase 1, replace the spreadsheet:** teams and members, events, inventory, manifest, essentials checklist, per-event reservations, movement log, kiosk check-out / check-in with PIN, rider requests. Web dashboard for Axel plus iPad kiosk.
-2. **Phase 2, rider self-service:** rider app with notifications, reservations visible to riders, battery state entered manually.
-3. **Phase 3, hardware and scale:** charger Bluetooth integration, QR scanning at the kiosk, label etching workflow, onboarding for additional teams.
+2. **Phase 2, rider self-service:** rider app with notifications, reservations visible to riders, battery ready times visible to riders.
+3. **Phase 3, hardware and scale:** QR scanning at the kiosk, label etching workflow, per-battery charge calibration, onboarding for additional teams.

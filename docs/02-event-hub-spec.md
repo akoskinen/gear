@@ -64,7 +64,7 @@ Sources of attention items:
 - Rider request submitted or changed and not yet planned.
 - Reserved item whose status is not ready.
 - Manifest item with no location, or located at HQ after departure.
-- Battery below threshold in the current phase context.
+- Battery below threshold in the current phase context; batteries waiting for a free charger; a battery charging for twice its expected time.
 - Essentials checklist item unconfirmed within its lead time.
 - During Live: item checked out for longer than the team's overdue window (default 6 hours), or checked out at end of day.
 - During Wrap-up: item still checked out; item not yet marked returned to vehicle / HQ.
@@ -112,7 +112,7 @@ Non-gear checklist for a standardized routine.
 Prominent during the Live phase; available in other phases for reference.
 
 - Two columns on wide screens: **Out with riders** and **At the tent**. Each item shows label code, model, and for checked-out items the rider name and elapsed time.
-- Batteries have their own row of tiles at the top with charge level and state (Charging, Ready, Low, In use). Charge is entered manually in v1 by tapping a tile; charger integration replaces this later.
+- Batteries have their own row of tiles at the top with charge level and state (Charging, Ready, Low, In use). Charge comes from the rider's reading at return plus the charge-time estimate while on a charger, marked "est." with a ready time. Tile actions: On charger, Off charger, Set reading, Needs check. A charger row shows occupied versus available chargers. See [battery charge estimation](05-battery-charge-estimation.md).
 - Manager actions: force return an item (when a rider forgot the kiosk), check out to a rider on their behalf, mark an item as damaged or needs check (removes it from kiosk availability immediately), release a reservation.
 - Feed: the last twenty movement log entries for this event, live-updating.
 - Overdue items pulse gently and are listed in Needs attention.
@@ -151,7 +151,7 @@ The kiosk is a separate iPad screen but it depends on hub data:
 - Inventory management outside an event (separate Inventory view).
 - Team settings, member management, PIN policy (separate Settings view).
 - Rider-facing screens (separate rider app spec).
-- Charger integration (phase 3).
+- Charger hardware integration (not planned; replaced by the charge estimate).
 
 ## 11. Next specs to write
 

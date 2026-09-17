@@ -142,9 +142,10 @@ A saved view with extra columns: reason, days in state, expected back. Sorted by
 
 ## 10. Battery specifics
 
-- Charge readings are manual in v1: Axel enters percentages in the hub Live board or here. A reading always carries its timestamp and the list shows reading age.
-- Bulk reading entry: select several batteries, enter one value, for the common "all on the charger overnight, all at 100 %" case.
-- Cycle count is manual too, incremented optionally on return; a later charger integration replaces both.
+- Each battery has a **battery type**; the type holds the charge model (time to 80 %, time to 100 %). See [battery charge estimation](05-battery-charge-estimation.md).
+- Charge comes from the rider's reading at return and the estimate while charging. Axel can still set a manual reading here or on the Live board; a manual reading always overrides the estimate. The list shows the percentage, whether it is estimated, and the reading age.
+- Bulk "On charger" for the end-of-day case: select several batteries, one tap, all start charging from their last reading.
+- Cycle count accumulates automatically from return readings as full-cycle equivalents, with manual adjustment available.
 - Transport flag: a battery can be marked "storage charge" for shipping, with the target percentage, so the packing view can show which batteries still need discharging or charging before travel.
 
 ## 11. Multi-team considerations
@@ -165,6 +166,7 @@ A saved view with extra columns: reason, days in state, expected back. Sorted by
 - Purchase price, depreciation, insurance values (a candidate for v2 as a simple cost field).
 - Scanning to look up an item (arrives with etched labels).
 - Automatic firmware detection.
+- Charger hardware integration; not needed with the charge estimate.
 
 ## 14. Next specs
 
