@@ -159,6 +159,6 @@ The kiosk is a separate iPad screen but it depends on hub data:
 ## 11. Next specs to write
 
 1. Kiosk flow (iPad): see [03-kiosk-spec.md](03-kiosk-spec.md).
-2. Inventory view and item detail.
-3. Rider app: my events, my requests, my gear.
-4. Team and member settings, including onboarding a second team.
+2. Inventory view and item detail: see [04-inventory-spec.md](04-inventory-spec.md).
+3. Rider app: see [06-rider-app-spec.md](06-rider-app-spec.md).
+4. Team and member settings: see [07-team-settings-spec.md](07-team-settings-spec.md).
