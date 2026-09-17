@@ -242,4 +242,4 @@ Nothing else. Planning stays in the hub.
 
 1. Inventory view and item detail: see [04-inventory-spec.md](04-inventory-spec.md).
 2. Rider app: see [06-rider-app-spec.md](06-rider-app-spec.md).
-3. Team and member settings, including onboarding a second team.
+3. Team and member settings: see [07-team-settings-spec.md](07-team-settings-spec.md).

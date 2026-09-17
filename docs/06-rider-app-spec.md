@@ -163,4 +163,4 @@ Manager broadcast messages ("briefing at 08:30 at the tent") are a v2 candidate;
 
 ## 12. Next spec
 
-1. Team and member settings, including onboarding a second team.
+1. Team and member settings: see [07-team-settings-spec.md](07-team-settings-spec.md).
