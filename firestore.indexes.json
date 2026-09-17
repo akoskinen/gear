@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    { "collectionGroup": "movements", "queryScope": "COLLECTION", "fields": [ { "fieldPath": "itemId", "order": "ASCENDING" }, { "fieldPath": "occurredAt", "order": "DESCENDING" } ] },
+    { "collectionGroup": "movements", "queryScope": "COLLECTION", "fields": [ { "fieldPath": "eventId", "order": "ASCENDING" }, { "fieldPath": "occurredAt", "order": "DESCENDING" } ] },
+    { "collectionGroup": "movements", "queryScope": "COLLECTION", "fields": [ { "fieldPath": "subjectMemberId", "order": "ASCENDING" }, { "fieldPath": "occurredAt", "order": "DESCENDING" } ] },
+    { "collectionGroup": "items", "queryScope": "COLLECTION", "fields": [ { "fieldPath": "category", "order": "ASCENDING" }, { "fieldPath": "labelCode", "order": "ASCENDING" } ] },
+    { "collectionGroup": "items", "queryScope": "COLLECTION", "fields": [ { "fieldPath": "holderMemberId", "order": "ASCENDING" }, { "fieldPath": "lastMovementAt", "order": "DESCENDING" } ] },
+    { "collectionGroup": "reservations", "queryScope": "COLLECTION_GROUP", "fields": [ { "fieldPath": "itemId", "order": "ASCENDING" }, { "fieldPath": "releasedAt", "order": "ASCENDING" } ] },
+    { "collectionGroup": "reservations", "queryScope": "COLLECTION_GROUP", "fields": [ { "fieldPath": "memberId", "order": "ASCENDING" }, { "fieldPath": "releasedAt", "order": "ASCENDING" } ] },
+    { "collectionGroup": "notifications", "queryScope": "COLLECTION", "fields": [ { "fieldPath": "memberId", "order": "ASCENDING" }, { "fieldPath": "createdAt", "order": "DESCENDING" } ] }
+  ],
+  "fieldOverrides": []
+}

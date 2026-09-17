@@ -216,7 +216,7 @@ Nothing else. Planning stays in the hub.
 ## 7. Device and environment
 
 - Recommended: iPad 11" or 13", landscape, in a waterproof case on a stand or strap-mounted to the tent pole at chest height. Portrait is supported with tiles reflowing to fewer per row.
-- Run in iPadOS Guided Access so riders cannot leave the app. Auto-lock off while the kiosk is active; the app dims the screen after 5 minutes idle and wakes on tap.
+- The kiosk is the web app added to the iPad home screen and opened full-screen. Run it in iPadOS Guided Access so riders cannot leave it. Auto-lock off while the kiosk is active; the app dims the screen after 5 minutes idle and wakes on tap.
 - Light, high-contrast theme by default. Dark theme available for indoor or evening use; the manager toggles it from the kiosk manager menu.
 - Wet touch: tap targets are large and spaced 16 pt apart at minimum. No drag, no swipe-to-delete, no pull-to-refresh anywhere in the kiosk.
 - Audio: a short confirming tick on take and return so the rider does not need to look at the screen. Muted from the manager menu.

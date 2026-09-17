@@ -63,7 +63,7 @@ Settings
 
 ### 5.2 Inviting
 
-- **Invite link or QR:** the manager creates an invitation with a role and a tier. The link opens the app (or the App Store if not installed) and joins the person to the team after sign-in. Links expire after 14 days and can be revoked.
+- **Invite link or QR:** the manager creates an invitation with a role and a tier. The link opens the web app and joins the person to the team after sign-in; the app then offers to add itself to the home screen. Links expire after 14 days and can be revoked.
 - **Add without the app:** for guests who will only use the kiosk. The manager enters a name and sets a PIN. The member has no account until they later accept an invitation, at which point the record merges so kiosk history is kept.
 - **Bulk add:** paste a list of names to create kiosk-only members quickly on a race morning. PINs are generated and shown once on screen for the manager to hand out.
 

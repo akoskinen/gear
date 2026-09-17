@@ -12,12 +12,20 @@ Gear tracking and rider management for an eFoil racing team.
 - [docs/05-battery-charge-estimation.md](docs/05-battery-charge-estimation.md) — battery charge and ready-time estimation from rider readings and charge times, no charger integration.
 - [docs/06-rider-app-spec.md](docs/06-rider-app-spec.md) — the rider's iPhone app: events, pre-event requests, my gear, notifications.
 - [docs/07-team-settings-spec.md](docs/07-team-settings-spec.md) — roles, members, PINs, team defaults, kiosk devices, and onboarding a new team.
-- [docs/08-build-plan.md](docs/08-build-plan.md) — stack, repository layout, schema overview, milestones.
+- [docs/08-build-plan.md](docs/08-build-plan.md) — stack, repository layout, milestones.
+- [docs/09-firestore-data-model.md](docs/09-firestore-data-model.md) — collections, roles, the movement pipeline, callables and triggers.
 
 ## Backend
 
-The schema lives in `supabase/migrations/` and is tested by `supabase/tests/`. Run both against any local Postgres 15+ (as a superuser) with:
+Firebase, in the `efoilracingprofiles` project. Everything lives under `gearTeams/{teamId}` in Firestore.
+
+- `packages/shared/` — types, the battery estimate, and `applyMovement()`, shared by functions and the web app.
+- `functions/` — Cloud Functions: the movement processor, event defaults, log rows, and callables.
+- `firestore.rules`, `firestore.indexes.json` — security rules and composite indexes.
+- `tests/rules/` — rules tests against the Firestore emulator.
 
 ```
-scripts/db-test.sh
+npm install
+npm test              # shared unit tests + rules tests (rules tests start the emulator; needs Java)
+npm run build         # type-check and compile shared + functions
 ```

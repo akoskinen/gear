@@ -1,0 +1,134 @@
+rules_version = '2';
+
+// Gear app security rules. All app data lives under /gearTeams/{teamId} so it
+// coexists with other collections in the efoilracingprofiles project.
+// Roles per team: owner, manager, rider, kiosk (docs/07-team-settings-spec.md).
+// Item state (holder, location, status, battery) is only ever changed by the
+// Cloud Function that applies movements; clients append to /movements.
+
+service cloud.firestore {
+  match /databases/{db}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function memberPath(teamId) { return /databases/$(db)/documents/gearTeams/$(teamId)/members/$(request.auth.uid); }
+    function memberDoc(teamId) { return get(memberPath(teamId)).data; }
+    function isMember(teamId) { return signedIn() && exists(memberPath(teamId)) && memberDoc(teamId).active == true; }
+    function hasRole(teamId, roles) { return isMember(teamId) && memberDoc(teamId).role in roles; }
+    function isOwner(teamId) { return hasRole(teamId, ['owner']); }
+    function isManager(teamId) { return hasRole(teamId, ['owner', 'manager']); }
+    function isStaff(teamId) { return hasRole(teamId, ['owner', 'manager', 'kiosk']); }
+    function isKiosk(teamId) { return hasRole(teamId, ['kiosk']); }
+    function isSelf(memberId) { return signedIn() && request.auth.uid == memberId; }
+    function onlyChanges(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
+    function unchanged(keys) { return !request.resource.data.diff(resource.data).affectedKeys().hasAny(keys); }
+
+    // A person's own profile and team list. The team list is maintained by functions.
+    match /gearUsers/{uid} {
+      allow read: if isSelf(uid);
+      allow create: if isSelf(uid) && !('teams' in request.resource.data);
+      allow update: if isSelf(uid) && unchanged(['teams']);
+      allow delete: if false;
+    }
+
+    // Kiosk pairing codes: the iPad (anonymous auth) creates one, a manager redeems it via a callable.
+    match /gearPairings/{code} {
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    match /gearTeams/{teamId} {
+      allow read: if isMember(teamId);
+      allow create, delete: if false;                 // createTeam callable
+      allow update: if isOwner(teamId) || (isManager(teamId) && unchanged(['createdBy', 'createdAt', 'name']));
+
+      match /members/{memberId} {
+        allow read: if isMember(teamId);
+        allow create, delete: if isManager(teamId);
+        allow update: if isManager(teamId)
+                      || (isSelf(memberId) && isMember(teamId) && onlyChanges(['displayName', 'phone', 'photoUrl', 'setup']));
+      }
+
+      // Salted PIN hashes: staff (including the kiosk device) read them for offline PIN entry.
+      match /pins/{memberId} {
+        allow read: if isStaff(teamId);
+        allow write: if false;                        // setMemberPin callable
+      }
+
+      match /invitations/{token} { allow read, write: if isManager(teamId); }
+      match /locations/{id}     { allow read: if isMember(teamId); allow write: if isManager(teamId); }
+      match /batteryTypes/{id}  { allow read: if isMember(teamId); allow write: if isManager(teamId); }
+      match /catalogue/{id}     { allow read: if isMember(teamId); allow write: if isManager(teamId); }
+
+      match /devices/{deviceId} {
+        allow read: if isStaff(teamId);
+        allow create, delete: if isManager(teamId);
+        allow update: if isManager(teamId)
+                      || (isKiosk(teamId) && resource.data.memberId == request.auth.uid && onlyChanges(['lastSyncAt', 'unsyncedCount']));
+      }
+
+      match /notifications/{id} {
+        allow read: if isMember(teamId) && resource.data.memberId == request.auth.uid;
+        allow update: if isMember(teamId) && resource.data.memberId == request.auth.uid && onlyChanges(['readAt']);
+        allow create, delete: if false;
+      }
+
+      match /items/{itemId} {
+        allow read: if isMember(teamId);
+        allow create: if isManager(teamId) && request.resource.data.holderMemberId == null;
+        allow update: if isManager(teamId)
+                      && unchanged(['holderMemberId', 'locationId', 'status', 'statusReason', 'battery', 'cycleCount', 'retiredAt', 'lastMovementAt']);
+        allow delete: if false;
+
+        match /notes/{id}            { allow read: if isMember(teamId); allow create: if isManager(teamId); allow update, delete: if false; }
+        match /readings/{id}         { allow read: if isMember(teamId); allow write: if false; }
+        match /chargingSessions/{id} { allow read: if isMember(teamId); allow write: if false; }
+      }
+
+      match /events/{eventId} {
+        allow read: if isMember(teamId);
+        allow create: if isManager(teamId) && request.resource.data.phase == 'planned';
+        allow update: if isManager(teamId) && request.resource.data.phase != 'closed' && unchanged(['closedAt', 'createdAt']);
+        allow delete: if false;                       // closeEvent callable
+
+        match /roster/{memberId} {
+          allow read: if isMember(teamId);
+          allow create, delete: if isManager(teamId);
+          allow update: if isManager(teamId)
+                        || (isSelf(memberId) && isMember(teamId) && onlyChanges(['status', 'respondedAt']));
+        }
+
+        match /requests/{memberId} {
+          allow read: if isMember(teamId);
+          allow create: if isSelf(memberId) && isMember(teamId) && request.resource.data.status == 'submitted';
+          allow update: if isManager(teamId)
+                        || (isSelf(memberId) && isMember(teamId) && unchanged(['status', 'declineReason']));
+          allow delete: if isManager(teamId) || (isSelf(memberId) && isMember(teamId));
+        }
+
+        match /reservations/{itemId} { allow read: if isMember(teamId); allow write: if isManager(teamId); }
+        match /manifest/{itemId}     { allow read: if isMember(teamId); allow write: if isManager(teamId); }
+      }
+
+      // Append-only log. Clients create unapplied rows; the function fills in the rest.
+      match /movements/{movementId} {
+        allow read: if isMember(teamId);
+        allow update, delete: if false;
+        allow create: if request.resource.data.applied == false
+                      && request.resource.data.conflictReason == null
+                      && request.resource.data.rejectedReason == null
+                      && (
+                        (isManager(teamId)
+                          && request.resource.data.kind in ['checkout', 'checkin', 'force_checkout', 'force_checkin',
+                                                            'location_change', 'status_change', 'battery_reading',
+                                                            'charging_started', 'charging_ended', 'availability_request', 'import', 'note'])
+                        ||
+                        (isKiosk(teamId)
+                          && request.resource.data.actorMemberId == request.auth.uid
+                          && request.resource.data.kind in ['checkout', 'checkin', 'battery_reading',
+                                                            'charging_started', 'charging_ended', 'availability_request'])
+                      );
+      }
+    }
+  }
+}

@@ -1,6 +1,6 @@
-# Rider App — iPhone (draft v0.1)
+# Rider App — Phone (draft v0.2)
 
-The rider app is each rider's personal window into the team's logistics. It answers three questions: which events am I going to, what do I need for them, and what gear do I have right now. It is deliberately small. The kiosk handles the moment of taking and returning gear; the rider app handles everything before and after.
+The rider app is each rider's personal window into the team's logistics. It is the same web app as the hub and the kiosk, opened on a phone and added to the home screen; it works on iPhone and Android alike. It answers three questions: which events am I going to, what do I need for them, and what gear do I have right now. It is deliberately small. The kiosk handles the moment of taking and returning gear; the rider app handles everything before and after.
 
 Related: [product outline](01-product-outline.md), [event hub](02-event-hub-spec.md), [kiosk](03-kiosk-spec.md), [battery charge estimation](05-battery-charge-estimation.md).
 
@@ -136,7 +136,7 @@ Manager broadcast messages ("briefing at 08:30 at the tent") are a v2 candidate;
 
 ## 8. Sign-in and identity
 
-- Sign in with Apple, or email link. No passwords.
+- Sign in with Google or Apple, or an email link. No passwords. The same Firebase login as efoil.racing.
 - A rider joins a team through an invitation link or QR from Axel. The invitation carries the team and the initial tier; Axel can adjust later.
 - One account, several teams. The team switcher is only shown when there is more than one.
 - The kiosk PIN is separate and team-specific, set by the manager and changeable by the rider in the app.

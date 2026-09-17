@@ -6,10 +6,10 @@ A working structure for the gear tracking and rider management app, derived from
 
 | Role | Person(s) | Primary device | Primary need |
 |---|---|---|---|
-| Logistics manager | Axel | Laptop (web) and iPad | Know where every item is, what state it is in, and what each rider needs for the next event |
-| Core rider | Manel, Antti, Pete, Carmine | iPhone | Reserved gear is guaranteed; state needs ahead of time; quick check-out at the tent |
-| Team / guest rider | Other riders at an event | iPhone, shared iPad | Find out what is available; check gear out and back in |
-| Kiosk | Shared iPad at the event tent | iPad (mounted, possibly offline) | Large-button check-out / check-in; rider identifies with a PIN |
+| Logistics manager | Axel | Laptop browser and iPad | Know where every item is, what state it is in, and what each rider needs for the next event |
+| Core rider | Manel, Antti, Pete, Carmine | Phone (iOS or Android) | Reserved gear is guaranteed; state needs ahead of time; quick check-out at the tent |
+| Team / guest rider | Other riders at an event | Phone, shared iPad | Find out what is available; check gear out and back in |
+| Kiosk | Shared iPad at the event tent | iPad, installed web app (mounted, possibly offline) | Large-button check-out / check-in; rider identifies with a PIN |
 
 Riders are assigned a **tier** (core, team, guest). Tier drives allocation rules, not screen access.
 
@@ -73,19 +73,19 @@ Riders are assigned a **tier** (core, team, guest). Tier drives allocation rules
 
 | # | Question | Decision | Consequence |
 |---|---|---|---|
-| 1 | Platform | Native iOS / iPadOS for riders and the kiosk. Axel also gets a web dashboard for the laptop. | One shared backend with an API; two client codebases (SwiftUI app, web app). The web dashboard is the primary planning surface, the iPad the primary event-day surface. |
+| 1 | Platform | One web app, installable on the home screen, for the kiosk, riders and Axel's laptop. Supersedes the earlier native iOS decision. | One TypeScript codebase. iPhone and Android riders both covered, no app store. The iPad kiosk runs the installed web app under Guided Access. |
 | 2 | Rider identity at kiosk | 4-digit PIN | Roster grid then PIN pad. No accounts needed on the shared iPad. PINs are per team and set by the manager. |
 | 3 | Labels | No scanning in v1. Etched QR codes later. | Label codes must be short, readable, and stable. The kiosk picks items from tiles now; scanning slots in as an alternative input later without changing the flow. |
 | 4 | Reservations | Set per event by Axel | Reservation is event-scoped. Planning view needs a fast "copy from last event" action. |
 | 5 | Tenancy | Other teams should be able to use it later | Team is the top-level entity from day one. All data is partitioned by team; people can belong to several teams. Authentication and roles are per team. |
 | 6 | Gear categories | Confirmed | Category list in section 2 stands. |
+| 9 | Backend | Firebase (Firestore, Auth, Functions, Hosting) in the existing efoilracingprofiles project. Supersedes the Supabase recommendation. | Free at this scale, no idle pausing, built-in offline persistence for the kiosk, and one login shared with efoil.racing. See [09-firestore-data-model.md](09-firestore-data-model.md). |
 | 8 | Rider-owned gear | Declared, not tracked. Riders state which slots they bring themselves; the movement log covers team gear only. | "My setup" in the rider profile, setup review at the top of the request, a setup matrix with demand totals in the hub roster, and an owner field on gear items for transport-only entries. |
 | 7 | Battery charge tracking | Estimate from rider-reported percentage at return, charging start time, and known charge times per battery type | No charger Bluetooth dependency. Kiosk asks one extra tap per battery at return. Charger integration is no longer planned. |
 
 ## 5b. Remaining open points
 
 - **Open: offline.** Race sites often have poor connectivity. Proposal: the kiosk and rider app work offline and sync; the movement log is designed to merge without conflicts. Assumed yes unless told otherwise.
-- **Open: technology stack.** Recommendation: a hosted Postgres backend with built-in auth and per-team row-level security (Supabase or similar), SwiftUI for iPhone and iPad, and a web dashboard sharing the same API. To be confirmed before build starts.
 
 ## 6. Suggested phasing
 
