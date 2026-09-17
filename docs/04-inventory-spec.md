@@ -170,5 +170,5 @@ A saved view with extra columns: reason, days in state, expected back. Sorted by
 
 ## 14. Next specs
 
-1. Rider app: my events, my requests, my gear.
+1. Rider app: see [06-rider-app-spec.md](06-rider-app-spec.md).
 2. Team and member settings, including onboarding a second team.

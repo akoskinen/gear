@@ -8,3 +8,4 @@ Gear tracking and rider management for an eFoil racing team.
 - [docs/03-kiosk-spec.md](docs/03-kiosk-spec.md) — the shared iPad check-out / check-in kiosk flow.
 - [docs/04-inventory-spec.md](docs/04-inventory-spec.md) — inventory list, item detail, label codes, locations, and status lifecycle.
 - [docs/05-battery-charge-estimation.md](docs/05-battery-charge-estimation.md) — battery charge and ready-time estimation from rider readings and charge times, no charger integration.
+- [docs/06-rider-app-spec.md](docs/06-rider-app-spec.md) — the rider's iPhone app: events, pre-event requests, my gear, notifications.
