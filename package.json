@@ -1,9 +1,14 @@
 {
   "name": "gear",
   "private": true,
-  "workspaces": ["packages/*", "functions", "tests/rules"],
+  "workspaces": [
+    "packages/*",
+    "functions",
+    "tests/rules",
+    "apps/web"
+  ],
   "scripts": {
-    "build": "npm run build -w packages/shared && npm run build -w functions",
+    "build": "npm run build -w packages/shared && npm run build -w functions && npm run build -w apps/web",
     "test": "npm run test:shared && npm run test:rules",
     "test:shared": "vitest run --dir packages/shared",
     "test:rules": "firebase emulators:exec --only firestore --project demo-gear \"vitest run --dir tests/rules\"",
