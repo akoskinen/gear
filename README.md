@@ -35,3 +35,7 @@ npm run build         # type-check and compile shared + functions
 
 - `data/axel-inventory-2026-09.csv` — Axel's warehouse sheet as exported, the source for the import and the demo data.
 - `data/axel-inventory-mapping.json` — the same rows classified into category, tracking mode and size; the importer's seed.
+
+## Prototypes
+
+- `prototypes/inventory.html` — clickable prototype of Axel's inventory experience (docs/10), built on the real sheet. Open the file in a browser; nothing is saved.
