@@ -1,0 +1,832 @@
+[
+  {
+    "sku": "24003",
+    "description": "LCS shroud assy",
+    "location": "Row 1",
+    "qty": 5,
+    "reorderQty": 1,
+    "category": "spare",
+    "trackingMode": "counted",
+    "size": null
+  },
+  {
+    "sku": "24007",
+    "description": "LCS jet sub-assy",
+    "location": "Row 1",
+    "qty": 7,
+    "reorderQty": 1,
+    "category": "spare",
+    "trackingMode": "counted",
+    "size": null
+  },
+  {
+    "sku": "24000",
+    "description": "LCS Base Plate",
+    "location": "Row 1",
+    "qty": 12,
+    "reorderQty": 1,
+    "category": "spare",
+    "trackingMode": "counted",
+    "size": null
+  },
+  {
+    "sku": "99123",
+    "description": "eBox for LIFT5 and LIFTX (H)",
+    "location": "Row 2",
+    "qty": 8,
+    "reorderQty": 3,
+    "category": "spare",
+    "trackingMode": "counted",
+    "size": null
+  },
+  {
+    "sku": "99118",
+    "description": "eBox for Lift3",
+    "location": "Row 2",
+    "qty": 1,
+    "reorderQty": 0,
+    "category": "spare",
+    "trackingMode": "counted",
+    "size": null
+  },
+  {
+    "sku": "102278",
+    "description": "OCHO MAST LCS SUBASSEMBLY",
+    "location": "Row 2",
+    "qty": 7,
+    "reorderQty": 3,
+    "category": "spare",
+    "trackingMode": "counted",
+    "size": null
+  },
+  {
+    "sku": "34000",
+    "description": "28\" Std Propulsion - Carbon",
+    "location": "Row 3-0",
+    "qty": 4,
+    "reorderQty": 2,
+    "category": "propulsion",
+    "trackingMode": "serialized",
+    "size": 28
+  },
+  {
+    "sku": "340506",
+    "description": "32\" Carbon LCS folding High Mount Propulsion for LIFTX",
+    "location": "Row 3-1",
+    "qty": 3,
+    "reorderQty": 1,
+    "category": "propulsion",
+    "trackingMode": "serialized",
+    "size": 32
+  },
+  {
+    "sku": "340507",
+    "description": "33\" Carbon LCS Folding High SuperMount Propulsion for LIFTX",
+    "location": "Row 3-1",
+    "qty": 3,
+    "reorderQty": 1,
+    "category": "propulsion",
+    "trackingMode": "serialized",
+    "size": 33
+  },
+  {
+    "sku": "340505",
+    "description": "32\" Carbon LCS Folding Propulsion for LIFTX",
+    "location": "Row 3-1",
+    "qty": 1,
+    "reorderQty": 1,
+    "category": "propulsion",
+    "trackingMode": "serialized",
+    "size": 32
+  },
+  {
+    "sku": "REFURB-340500",
+    "description": "28\" Aluminum Jet Propulsion for LIFT5F",
+    "location": "Row 3-1",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "propulsion",
+    "trackingMode": "serialized",
+    "size": 28
+  },
+  {
+    "sku": "52004",
+    "description": "Blowfish 4'4",
+    "location": "Row 3-2",
+    "qty": 2,
+    "reorderQty": 0,
+    "category": "board",
+    "trackingMode": "serialized",
+    "size": null
+  },
+  {
+    "sku": "52000",
+    "description": "Blowfish 4'9",
+    "location": "Row 3-2",
+    "qty": 1,
+    "reorderQty": 0,
+    "category": "board",
+    "trackingMode": "serialized",
+    "size": null
+  },
+  {
+    "sku": "440000",
+    "description": "LIFTX Battery Adapter",
+    "location": "Row 3-2",
+    "qty": 4,
+    "reorderQty": 0,
+    "category": "spare",
+    "trackingMode": "counted",
+    "size": null
+  },
+  {
+    "sku": "31122",
+    "description": "Battery Charger Assembly for Lift4",
+    "location": "Row 3-2",
+    "qty": 4,
+    "reorderQty": 1,
+    "category": "charger",
+    "trackingMode": "serialized",
+    "size": null
+  },
+  {
+    "sku": "102545",
+    "description": "Lift Charger L5/LX",
+    "location": "Row 3-2",
+    "qty": 3,
+    "reorderQty": 1,
+    "category": "charger",
+    "trackingMode": "serialized",
+    "size": null
+  },
+  {
+    "sku": "21107",
+    "description": "AC Cord - Euro",
+    "location": "Row 3-2",
+    "qty": 35,
+    "reorderQty": 3,
+    "category": "spare",
+    "trackingMode": "counted",
+    "size": null
+  },
+  {
+    "sku": "430003",
+    "description": "LiftX Light Battery",
+    "location": "Row 3-2",
+    "qty": 5,
+    "reorderQty": 1,
+    "category": "battery",
+    "trackingMode": "serialized",
+    "size": null
+  },
+  {
+    "sku": "430002",
+    "description": "LiftX Battery",
+    "location": "Row 3-2",
+    "qty": 2,
+    "reorderQty": 1,
+    "category": "battery",
+    "trackingMode": "serialized",
+    "size": null
+  },
+  {
+    "sku": "33065",
+    "description": "130 Florence X - Front Wing",
+    "location": "Row 4-0",
+    "qty": 15,
+    "reorderQty": 1,
+    "category": "front_wing",
+    "trackingMode": "serialized",
+    "size": 130
+  },
+  {
+    "sku": "33055",
+    "description": "110 Florence X - Fron Wing",
+    "location": "Row 4-0",
+    "qty": 15,
+    "reorderQty": 1,
+    "category": "front_wing",
+    "trackingMode": "serialized",
+    "size": 110
+  },
+  {
+    "sku": "440001",
+    "description": "Lift Foil Stand",
+    "location": "Row 4-1",
+    "qty": 3,
+    "reorderQty": null,
+    "category": "spare",
+    "trackingMode": "counted",
+    "size": null
+  },
+  {
+    "sku": "440001",
+    "description": "Lift Foil Stand",
+    "location": "Cabana",
+    "qty": 2,
+    "reorderQty": null,
+    "category": "spare",
+    "trackingMode": "counted",
+    "size": null
+  },
+  {
+    "sku": "11000",
+    "description": "Aluminum battery case - Gen4 batteries",
+    "location": "Row 4-1",
+    "qty": 14,
+    "reorderQty": null,
+    "category": "spare",
+    "trackingMode": "counted",
+    "size": null
+  },
+  {
+    "sku": "32150",
+    "description": "Gen4 Full Range battery pack",
+    "location": "Row 5-0",
+    "qty": 5,
+    "reorderQty": 0,
+    "category": "battery",
+    "trackingMode": "serialized",
+    "size": null
+  },
+  {
+    "sku": "430000",
+    "description": "Gen5 Full Range battery pack",
+    "location": "Row 5-0",
+    "qty": 0,
+    "reorderQty": null,
+    "category": "battery",
+    "trackingMode": "serialized",
+    "size": null
+  },
+  {
+    "sku": "840003",
+    "description": "Battery backpack for Gen5",
+    "location": "Row 5-1",
+    "qty": 8,
+    "reorderQty": 0,
+    "category": "spare",
+    "trackingMode": "counted",
+    "size": null
+  },
+  {
+    "sku": "840004",
+    "description": "Battery backpack for LiftX",
+    "location": "Row 5-1",
+    "qty": 3,
+    "reorderQty": 0,
+    "category": "spare",
+    "trackingMode": "counted",
+    "size": null
+  },
+  {
+    "sku": "999511",
+    "description": "LIFT5 5'4 Sun Kissed",
+    "location": "Board wall",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "board",
+    "trackingMode": "serialized",
+    "size": null
+  },
+  {
+    "sku": "999511",
+    "description": "LIFT5 5'4 Sun Kissed",
+    "location": "Cabana",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "board",
+    "trackingMode": "serialized",
+    "size": null
+  },
+  {
+    "sku": "999530",
+    "description": "LIFT5 5'2 Laird Carbon Hex Black",
+    "location": "Board wall",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "board",
+    "trackingMode": "serialized",
+    "size": null
+  },
+  {
+    "sku": "999534",
+    "description": "LIFTX 4'7 Florence Red",
+    "location": "Cabana",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "board",
+    "trackingMode": "serialized",
+    "size": null
+  },
+  {
+    "sku": "999516",
+    "description": "LIFTX 4'3 Off-White",
+    "location": "Cabana",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "board",
+    "trackingMode": "serialized",
+    "size": null
+  },
+  {
+    "sku": "999520",
+    "description": "LIFTX 4'8 Spark Blue",
+    "location": "Board wall",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "board",
+    "trackingMode": "serialized",
+    "size": null
+  },
+  {
+    "sku": "999535",
+    "description": "LIFTX 4'7 Florence Off-White",
+    "location": "Board wall",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "board",
+    "trackingMode": "serialized",
+    "size": null
+  },
+  {
+    "sku": "33063",
+    "description": "148 Havoc - Front Wing",
+    "location": "Wing wall",
+    "qty": 2,
+    "reorderQty": 0,
+    "category": "front_wing",
+    "trackingMode": "serialized",
+    "size": 148
+  },
+  {
+    "sku": "33071",
+    "description": "91 Florence X - Front Wing",
+    "location": "Wing wall",
+    "qty": 2,
+    "reorderQty": 0,
+    "category": "front_wing",
+    "trackingMode": "serialized",
+    "size": 91
+  },
+  {
+    "sku": "33070",
+    "description": "71 Florence X - Front Wing",
+    "location": "Wing wall",
+    "qty": 2,
+    "reorderQty": 0,
+    "category": "front_wing",
+    "trackingMode": "serialized",
+    "size": 71
+  },
+  {
+    "sku": "16120",
+    "description": "M60 carbon - Surf Strut - 28\"",
+    "location": "Wing wall",
+    "qty": 2,
+    "reorderQty": null,
+    "category": "mast",
+    "trackingMode": "serialized",
+    "size": 28
+  },
+  {
+    "sku": "16121",
+    "description": "M60 carbon - Surf Strut - 30\"",
+    "location": "Wing wall",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "mast",
+    "trackingMode": "serialized",
+    "size": 30
+  },
+  {
+    "sku": "16118",
+    "description": "M40 carbon - Surf Strut - 32\"",
+    "location": "Wing wall",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "mast",
+    "trackingMode": "serialized",
+    "size": 32
+  },
+  {
+    "sku": "16117",
+    "description": "28\" Surf cover V26",
+    "location": "Row 5-2",
+    "qty": 12,
+    "reorderQty": null,
+    "category": "spare",
+    "trackingMode": "counted",
+    "size": null
+  },
+  {
+    "sku": "unknown",
+    "description": "28\" classic mast",
+    "location": "Wing wall",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "mast",
+    "trackingMode": "serialized",
+    "size": 28
+  },
+  {
+    "sku": "80180",
+    "description": "26 Carve Ext Back Wing - Kit",
+    "location": "Wing wall",
+    "qty": 4,
+    "reorderQty": 1,
+    "category": "stabilizer",
+    "trackingMode": "serialized",
+    "size": 26
+  },
+  {
+    "sku": "33029",
+    "description": "26 Carve - Back Wing",
+    "location": "Wing wall",
+    "qty": 1,
+    "reorderQty": 1,
+    "category": "stabilizer",
+    "trackingMode": "serialized",
+    "size": 26
+  },
+  {
+    "sku": "33073",
+    "description": "20 Florence X - Back Wing",
+    "location": "Wing wall",
+    "qty": 3,
+    "reorderQty": 1,
+    "category": "stabilizer",
+    "trackingMode": "serialized",
+    "size": 20
+  },
+  {
+    "sku": "33057",
+    "description": "26 Flow - Back Wing M30",
+    "location": "Wing wall",
+    "qty": 1,
+    "reorderQty": 1,
+    "category": "stabilizer",
+    "trackingMode": "serialized",
+    "size": 26
+  },
+  {
+    "sku": "101884",
+    "description": "270 CAMBER PRO LCS RIPCORD",
+    "location": "Wing wall",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "front_wing",
+    "trackingMode": "serialized",
+    "size": 270
+  },
+  {
+    "sku": "33032",
+    "description": "270 Camber Pro - Front wing",
+    "location": "Wing wall",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "front_wing",
+    "trackingMode": "serialized",
+    "size": 270
+  },
+  {
+    "sku": "801401",
+    "description": "210 CAMBER PRO LCS RIPCORD",
+    "location": "Wing wall",
+    "qty": 5,
+    "reorderQty": null,
+    "category": "front_wing",
+    "trackingMode": "serialized",
+    "size": 210
+  },
+  {
+    "sku": "33031",
+    "description": "210 Camber Pro - Fron Wing",
+    "location": "Wing wall",
+    "qty": 2,
+    "reorderQty": null,
+    "category": "front_wing",
+    "trackingMode": "serialized",
+    "size": 210
+  },
+  {
+    "sku": "33030",
+    "description": "160 Camber Pro",
+    "location": "Wing wall",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "front_wing",
+    "trackingMode": "serialized",
+    "size": 160
+  },
+  {
+    "sku": "80143",
+    "description": "220 High Aspect X front wing",
+    "location": "Wing wall",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "front_wing",
+    "trackingMode": "serialized",
+    "size": 220
+  },
+  {
+    "sku": "80144",
+    "description": "180 High Aspect X front wing",
+    "location": "Wing wall",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "front_wing",
+    "trackingMode": "serialized",
+    "size": 180
+  },
+  {
+    "sku": "33042",
+    "description": "120 High Aspect X - Front wing M39",
+    "location": "Wing wall",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "front_wing",
+    "trackingMode": "serialized",
+    "size": 120
+  },
+  {
+    "sku": "80120",
+    "description": "90 High Aspect X front wing",
+    "location": "Wing wall",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "front_wing",
+    "trackingMode": "serialized",
+    "size": 90
+  },
+  {
+    "sku": "80128",
+    "description": "70 High aspect X front wing",
+    "location": "Wing wall",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "front_wing",
+    "trackingMode": "serialized",
+    "size": 70
+  },
+  {
+    "sku": "80043",
+    "description": "300 Surf V2 front wing",
+    "location": "Wing wall",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "front_wing",
+    "trackingMode": "serialized",
+    "size": 300
+  },
+  {
+    "sku": "80040",
+    "description": "150 Surf V2 front wing",
+    "location": "Wing wall",
+    "qty": 4,
+    "reorderQty": null,
+    "category": "front_wing",
+    "trackingMode": "serialized",
+    "size": 150
+  },
+  {
+    "sku": "33060",
+    "description": "92 Havoc - Front Wing",
+    "location": "Wing wall",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "front_wing",
+    "trackingMode": "serialized",
+    "size": 92
+  },
+  {
+    "sku": "33068",
+    "description": "74 Havoc - Fron Wing",
+    "location": "Wing wall",
+    "qty": 4,
+    "reorderQty": null,
+    "category": "front_wing",
+    "trackingMode": "serialized",
+    "size": 74
+  },
+  {
+    "sku": "33051",
+    "description": "62 Kaikea - Front Wing M30",
+    "location": "Wing wall",
+    "qty": 3,
+    "reorderQty": null,
+    "category": "front_wing",
+    "trackingMode": "serialized",
+    "size": 62
+  },
+  {
+    "sku": "33036",
+    "description": "36 Glide - Back Wing",
+    "location": "Wing wall",
+    "qty": 5,
+    "reorderQty": null,
+    "category": "stabilizer",
+    "trackingMode": "serialized",
+    "size": 36
+  },
+  {
+    "sku": "33016",
+    "description": "32 Glide - Back Wing",
+    "location": "Wing wall",
+    "qty": 2,
+    "reorderQty": null,
+    "category": "stabilizer",
+    "trackingMode": "serialized",
+    "size": 32
+  },
+  {
+    "sku": "80044",
+    "description": "48 Surf V2 - Back Wing",
+    "location": "Wing wall",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "stabilizer",
+    "trackingMode": "serialized",
+    "size": 48
+  },
+  {
+    "sku": "33044",
+    "description": "20 Carve - Back Wing M30",
+    "location": "Wing wall",
+    "qty": 2,
+    "reorderQty": null,
+    "category": "stabilizer",
+    "trackingMode": "serialized",
+    "size": 20
+  },
+  {
+    "sku": "80179",
+    "description": "20 Carve Ext - back wing kit",
+    "location": "Wing wall",
+    "qty": 4,
+    "reorderQty": null,
+    "category": "stabilizer",
+    "trackingMode": "serialized",
+    "size": 20
+  },
+  {
+    "sku": "33053",
+    "description": "21 Flow - Back Wing M30",
+    "location": "Wing wall",
+    "qty": 11,
+    "reorderQty": null,
+    "category": "stabilizer",
+    "trackingMode": "serialized",
+    "size": 21
+  },
+  {
+    "sku": "80014",
+    "description": "Elite hand controller",
+    "location": "Row 1",
+    "qty": 7,
+    "reorderQty": null,
+    "category": "controller",
+    "trackingMode": "serialized",
+    "size": null
+  },
+  {
+    "sku": "80019",
+    "description": "Lift hand controller",
+    "location": "Row 1",
+    "qty": 3,
+    "reorderQty": null,
+    "category": "controller",
+    "trackingMode": "serialized",
+    "size": null
+  },
+  {
+    "sku": "80015",
+    "description": "Stf hand controller V2",
+    "location": "Row 1",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "controller",
+    "trackingMode": "serialized",
+    "size": null
+  },
+  {
+    "sku": "999525",
+    "description": "Lift5 4'4 red rock",
+    "location": null,
+    "qty": 1,
+    "reorderQty": null,
+    "category": "board",
+    "trackingMode": "serialized",
+    "size": null
+  },
+  {
+    "sku": "999421",
+    "description": "Lift4 5'4 Emerald Mist metallic Satin",
+    "location": null,
+    "qty": 1,
+    "reorderQty": null,
+    "category": "board",
+    "trackingMode": "serialized",
+    "size": null
+  },
+  {
+    "sku": "999418",
+    "description": "Lift4 5'4 Carbon black satin",
+    "location": null,
+    "qty": 1,
+    "reorderQty": null,
+    "category": "board",
+    "trackingMode": "serialized",
+    "size": null
+  },
+  {
+    "sku": "",
+    "description": "PYZEL wingboard (5'9?)",
+    "location": null,
+    "qty": null,
+    "reorderQty": null,
+    "category": "board",
+    "trackingMode": "serialized",
+    "size": null
+  },
+  {
+    "sku": "",
+    "description": "SUP 82\" 115L",
+    "location": null,
+    "qty": 1,
+    "reorderQty": null,
+    "category": "board",
+    "trackingMode": "serialized",
+    "size": null
+  },
+  {
+    "sku": "101953",
+    "description": "motor isolator ring 68",
+    "location": "Row 1",
+    "qty": 20,
+    "reorderQty": null,
+    "category": "spare",
+    "trackingMode": "counted",
+    "size": null
+  },
+  {
+    "sku": "101957",
+    "description": "motor isolator ring 55",
+    "location": "Row 1",
+    "qty": 10,
+    "reorderQty": null,
+    "category": "spare",
+    "trackingMode": "counted",
+    "size": null
+  },
+  {
+    "sku": "80178",
+    "description": "150 Grubb - Front Wing Kit",
+    "location": "Wing wall",
+    "qty": 2,
+    "reorderQty": null,
+    "category": "front_wing",
+    "trackingMode": "serialized",
+    "size": 150
+  },
+  {
+    "sku": "80174",
+    "description": "90 Vario Front Wing - kit",
+    "location": "Wing wall",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "front_wing",
+    "trackingMode": "serialized",
+    "size": 90
+  },
+  {
+    "sku": "80175",
+    "description": "120 Vario Front Wing - kit",
+    "location": "Wing wall",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "front_wing",
+    "trackingMode": "serialized",
+    "size": 120
+  },
+  {
+    "sku": "801405",
+    "description": "150 Vario LCS Front Wing",
+    "location": "Wing wall",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "front_wing",
+    "trackingMode": "serialized",
+    "size": 150
+  },
+  {
+    "sku": "340503",
+    "description": "32\" Carbon LCS Jet Propulsion for Lift5",
+    "location": "Row 3-1",
+    "qty": 1,
+    "reorderQty": null,
+    "category": "propulsion",
+    "trackingMode": "serialized",
+    "size": 32
+  }
+]

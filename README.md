@@ -14,6 +14,7 @@ Gear tracking and rider management for an eFoil racing team.
 - [docs/07-team-settings-spec.md](docs/07-team-settings-spec.md) — roles, members, PINs, team defaults, kiosk devices, and onboarding a new team.
 - [docs/08-build-plan.md](docs/08-build-plan.md) — stack, repository layout, milestones.
 - [docs/09-firestore-data-model.md](docs/09-firestore-data-model.md) — collections, roles, the movement pipeline, callables and triggers.
+- [docs/10-inventory-ux.md](docs/10-inventory-ux.md) — Axel's inventory experience, redesigned around his real warehouse sheet: places, walks, two tracking modes, reorder, import.
 
 ## Backend
 
@@ -29,3 +30,8 @@ npm install
 npm test              # shared unit tests + rules tests (rules tests start the emulator; needs Java)
 npm run build         # type-check and compile shared + functions
 ```
+
+## Data
+
+- `data/axel-inventory-2026-09.csv` — Axel's warehouse sheet as exported, the source for the import and the demo data.
+- `data/axel-inventory-mapping.json` — the same rows classified into category, tracking mode and size; the importer's seed.
