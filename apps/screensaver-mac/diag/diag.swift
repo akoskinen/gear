@@ -1,6 +1,6 @@
-// Temporary diagnostic: recreates the screensaver host's situation (a window
-// macOS reports as not visible) and measures whether the Mapbox page keeps
-// animating, with WebKit's occlusion detection on (old build) and off (fix).
+// Temporary diagnostic: runs the built screensaver on screen with its
+// diagnostics overlay on, prints the overlay, and measures from a real screen
+// capture whether the map is actually drawn (vs. the page's dark background).
 import AppKit
 import ScreenSaver
 import WebKit
@@ -8,57 +8,50 @@ import WebKit
 let app = NSApplication.shared
 app.setActivationPolicy(.regular)
 
+ScreenSaverDefaults(forModuleWithName: "racing.efoil.live-screensaver")!.set(true, forKey: "showDiagnostics")
+
 let bundle = Bundle(path: CommandLine.arguments[1])!
 bundle.load()
 let cls = bundle.principalClass as! ScreenSaverView.Type
-let frame = NSRect(x: 0, y: 0, width: 1440, height: 900)
-let window = NSWindow(contentRect: frame, styleMask: [.borderless], backing: .buffered, defer: false)
-let view = cls.init(frame: frame, isPreview: false)!
+let screen = NSScreen.main!.frame
+let window = NSWindow(contentRect: screen, styleMask: [.borderless], backing: .buffered, defer: false)
+window.level = .screenSaver
+let view = cls.init(frame: NSRect(origin: .zero, size: screen.size), isPreview: false)!
 window.contentView = view
-window.setFrameOrigin(NSPoint(x: -30000, y: -30000))  // off screen: occluded
 window.orderFrontRegardless()
 view.startAnimation()
 
-func findWebView(_ v: NSView) -> WKWebView? {
-    if let w = v as? WKWebView { return w }
-    for s in v.subviews { if let w = findWebView(s) { return w } }
-    return nil
+func labels(_ v: NSView) -> [NSTextField] {
+    (v as? NSTextField).map { [$0] } ?? [] + v.subviews.flatMap(labels)
 }
-func setOcclusionDetection(_ wv: WKWebView, _ on: Bool) {
-    let sel = NSSelectorFromString("_setWindowOcclusionDetectionEnabled:")
-    let m = class_getInstanceMethod(WKWebView.self, sel)!
-    typealias F = @convention(c) (AnyObject, Selector, Bool) -> Void
-    unsafeBitCast(method_getImplementation(m), to: F.self)(wv, sel, on)
+
+func analyse(_ path: String) {
+    guard let img = NSImage(contentsOfFile: path), let tiff = img.tiffRepresentation,
+          let rep = NSBitmapImageRep(data: tiff) else { print("no capture"); return }
+    var dark = 0, colour = 0, total = 0
+    for y in stride(from: 0, to: rep.pixelsHigh, by: 6) {
+        for x in stride(from: 0, to: rep.pixelsWide, by: 6) {
+            guard let c = rep.colorAt(x: x, y: y)?.usingColorSpace(.sRGB) else { continue }
+            total += 1
+            let r = c.redComponent, g = c.greenComponent, b = c.blueComponent
+            if r + g + b < 0.25 { dark += 1 }
+            if max(r, g, b) - min(r, g, b) > 0.08 && r + g + b > 0.3 { colour += 1 }
+        }
+    }
+    print("capture \(rep.pixelsWide)x\(rep.pixelsHigh): dark \(100 * dark / max(total, 1))%, coloured \(100 * colour / max(total, 1))%")
 }
 
 var tick = 0
-var mark = 0
 Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { t in
     tick += 1
-    guard let wv = findWebView(view) else { return }
-    switch tick {
-    case 3:
-        print("window visible=\(window.isVisible) occlusionVisible=\(window.occlusionState.contains(.visible))")
-        wv.evaluateJavaScript("window.__raf=0;(function f(){__raf++;requestAnimationFrame(f)})();1")
-    case 14:
-        print("-- phase A: occlusion detection ON (how the first build behaved)")
-        setOcclusionDetection(wv, true)
-    case 16, 26:
-        wv.evaluateJavaScript("__raf") { r, _ in mark = (r as? Int) ?? -1 }
-    case 21, 31:
-        let label = tick == 21 ? "A (old)" : "B (fix)"
-        wv.evaluateJavaScript("JSON.stringify({raf: __raf, vis: document.visibilityState, hidden: document.hidden})") { r, _ in
-            let s = r as? String ?? "?"
-            let raf = (try? JSONSerialization.jsonObject(with: Data(s.utf8)) as? [String: Any])?["raf"] as? Int ?? -1
-            print("phase \(label): animation frames in 5 s = \(raf - mark)  page=\(s)")
-        }
-        if tick == 21 {
-            print("-- phase B: occlusion detection OFF (the fix)")
-            setOcclusionDetection(wv, false)
-        }
-    case 33:
+    if tick == 30 {
+        for l in labels(view) where l.stringValue.contains("diagnostics") { print(l.stringValue) }
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+        p.arguments = ["-x", "shot.png"]
+        try? p.run(); p.waitUntilExit()
+        analyse("shot.png")
         t.invalidate(); exit(0)
-    default: break
     }
 }
 app.run()

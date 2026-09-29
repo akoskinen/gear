@@ -16,6 +16,10 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
     private var retryTimer: Timer?
     private var configController: ConfigSheetController?
     private var activity: NSObjectProtocol?
+    private let diagnosticsLabel = NSTextField(wrappingLabelWithString: "")
+    private var diagnosticsTimer: Timer?
+    private var pageReport: [String: Any] = [:]
+    private var events: [String] = []
 
     // MARK: - Settings
 
@@ -25,6 +29,7 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
         defaults.register(defaults: [
             "url": defaultURL,
             "reloadMinutes": defaultReloadMinutes,
+            "showDiagnostics": false,
         ])
         return defaults
     }
@@ -36,6 +41,10 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
 
     private var reloadMinutes: Int {
         Self.defaults.integer(forKey: "reloadMinutes")
+    }
+
+    private var showDiagnostics: Bool {
+        Self.defaults.bool(forKey: "showDiagnostics") && !isPreview
     }
 
     // MARK: - Lifecycle
@@ -54,6 +63,19 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
         NSLayoutConstraint.activate([
             statusLabel.centerXAnchor.constraint(equalTo: centerXAnchor),
             statusLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
+        ])
+
+        diagnosticsLabel.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
+        diagnosticsLabel.textColor = .white
+        diagnosticsLabel.drawsBackground = true
+        diagnosticsLabel.backgroundColor = NSColor(white: 0, alpha: 0.75)
+        diagnosticsLabel.translatesAutoresizingMaskIntoConstraints = false
+        diagnosticsLabel.isHidden = true
+        addSubview(diagnosticsLabel)
+        NSLayoutConstraint.activate([
+            diagnosticsLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
+            diagnosticsLabel.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -16),
+            diagnosticsLabel.widthAnchor.constraint(lessThanOrEqualToConstant: 640),
         ])
 
         // Since macOS Sonoma the screensaver host often never calls
@@ -118,14 +140,16 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
         // WebKit believes the page is in the background.
         Self.setPrivateFlag(config.preferences, "_setHiddenPageDOMTimerThrottlingEnabled:", false)
         Self.setPrivateFlag(config.preferences, "_setPageVisibilityBasedProcessSuppressionEnabled:", false)
+        config.userContentController.addUserScript(WKUserScript(
+            source: Self.pageProbeScript, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        config.userContentController.add(WeakMessageHandler(self), name: "efoil")
 
         let webView = WKWebView(frame: bounds, configuration: config)
         // Since macOS Sonoma the screensaver runs in a helper process and is
-        // shown on screen through a remote layer, so its window never counts
-        // as visible. WebKit then treats the page as hidden and stops
-        // requestAnimationFrame, which is what WebGL maps (the Mapbox globe)
-        // draw with: the page shows, the globe stays black. Tell WebKit to
-        // ignore window occlusion so the page always renders.
+        // shown on screen through a remote layer, so its window may not count
+        // as visible. If WebKit then treats the page as hidden it stops
+        // requestAnimationFrame, which the Mapbox globe draws with. Tell
+        // WebKit to ignore window occlusion so the page keeps rendering.
         Self.setPrivateFlag(webView, "_setWindowOcclusionDetectionEnabled:", false)
         webView.autoresizingMask = [.width, .height]
         webView.navigationDelegate = self
@@ -138,6 +162,14 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
         }
         addSubview(webView, positioned: .below, relativeTo: statusLabel)
         self.webView = webView
+        log("load \(pageURL.absoluteString) in \(ProcessInfo.processInfo.processName), macOS \(ProcessInfo.processInfo.operatingSystemVersionString)")
+
+        if showDiagnostics {
+            diagnosticsLabel.isHidden = false
+            diagnosticsTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+                self?.updateDiagnostics()
+            }
+        }
 
         showStatus("Connecting to eFoil Racing live…")
         webView.load(URLRequest(url: pageURL, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 30))
@@ -162,9 +194,13 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
         reloadTimer = nil
         retryTimer?.invalidate()
         retryTimer = nil
+        diagnosticsTimer?.invalidate()
+        diagnosticsTimer = nil
+        pageReport = [:]
         if let webView {
             webView.stopLoading()
             webView.navigationDelegate = nil
+            webView.configuration.userContentController.removeScriptMessageHandler(forName: "efoil")
             webView.loadHTMLString("", baseURL: nil)
             webView.removeFromSuperview()
         }
@@ -198,6 +234,7 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        log("page finished loading")
         showStatus("")
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 1.2
@@ -206,15 +243,95 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        log("load failed: \(error.localizedDescription)")
         scheduleRetry()
     }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        log("load failed: \(error.localizedDescription)")
         scheduleRetry()
     }
 
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        log("web content process terminated")
         scheduleRetry()
+    }
+
+    // MARK: - Diagnostics
+
+    /// Runs inside the page and reports, every 2 seconds, what the page sees:
+    /// visibility, animation frame rate, WebGL, the map canvas and errors.
+    static let pageProbeScript = """
+    (() => {
+      const errors = [];
+      let frames = 0, fps = 0, contextLost = 0;
+      const note = m => { errors.push(String(m).slice(0, 160)); if (errors.length > 4) errors.shift(); };
+      addEventListener('error', e => note('error: ' + e.message), true);
+      addEventListener('unhandledrejection', e => note('rejection: ' + (e.reason && e.reason.message || e.reason)));
+      const origError = console.error;
+      console.error = (...a) => { note('console: ' + a.join(' ')); origError.apply(console, a); };
+      const origGetContext = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = function (type, ...rest) {
+        const ctx = origGetContext.call(this, type, ...rest);
+        if (/webgl/.test(type) && !this.__efoil) {
+          this.__efoil = true;
+          if (!ctx) note('getContext(' + type + ') returned null');
+          this.addEventListener('webglcontextlost', () => { contextLost++; note('WebGL context lost'); });
+        }
+        return ctx;
+      };
+      (function tick() { frames++; requestAnimationFrame(tick); })();
+      let gl = 'unknown';
+      try {
+        const c = origGetContext.call(document.createElement('canvas'), 'webgl2') || origGetContext.call(document.createElement('canvas'), 'webgl');
+        gl = c ? c.getParameter(c.VERSION) : 'NONE';
+      } catch (e) { gl = 'error ' + e.message; }
+      setInterval(() => {
+        fps = Math.round(frames / 2); frames = 0;
+        const canvas = document.querySelector('canvas.mapboxgl-canvas');
+        window.webkit.messageHandlers.efoil.postMessage({
+          visibility: document.visibilityState, fps, webgl: gl, contextLost,
+          canvas: canvas ? canvas.width + 'x' + canvas.height : 'none',
+          errors: errors.slice()
+        });
+      }, 2000);
+    })();
+    """
+
+    func receivedPageReport(_ report: [String: Any]) {
+        let first = pageReport.isEmpty
+        pageReport = report
+        if first || !((report["errors"] as? [String])?.isEmpty ?? true) {
+            log("page: \(report)")
+        }
+    }
+
+    private func log(_ message: String) {
+        NSLog("EfoilLive: %@", message)
+        let time = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium)
+        events.append("\(time) \(message)")
+        if events.count > 5 { events.removeFirst() }
+    }
+
+    private func updateDiagnostics() {
+        let window = self.window
+        var lines = [
+            "eFoil Racing Live — diagnostics",
+            "host: \(ProcessInfo.processInfo.processName)  macOS \(ProcessInfo.processInfo.operatingSystemVersionString)",
+            "window: \(window.map { "visible=\($0.isVisible) occluded=\(!$0.occlusionState.contains(.visible)) level=\($0.level.rawValue) \(Int($0.frame.width))x\(Int($0.frame.height))" } ?? "none")",
+            "web view: \(webView.map { "alpha=\($0.alphaValue) \(Int($0.frame.width))x\(Int($0.frame.height)) loading=\($0.isLoading)" } ?? "none")",
+        ]
+        if pageReport.isEmpty {
+            lines.append("page: no report yet")
+        } else {
+            let r = pageReport
+            lines.append("page: visibility=\(r["visibility"] ?? "?") fps=\(r["fps"] ?? "?") webgl=\(r["webgl"] ?? "?")")
+            lines.append("map canvas: \(r["canvas"] ?? "?")  context lost: \(r["contextLost"] ?? 0)")
+            for e in (r["errors"] as? [String]) ?? [] { lines.append("  ! \(e)") }
+        }
+        lines.append("events:")
+        lines += events.map { "  \($0)" }
+        diagnosticsLabel.stringValue = lines.joined(separator: "\n")
     }
 
     // MARK: - Options sheet
@@ -228,16 +345,29 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
     }
 }
 
+/// Forwards page reports without the web view retaining the screensaver.
+final class WeakMessageHandler: NSObject, WKScriptMessageHandler {
+    weak var target: EfoilLiveView?
+    init(_ target: EfoilLiveView) { self.target = target }
+
+    func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
+        if let report = message.body as? [String: Any] {
+            target?.receivedPageReport(report)
+        }
+    }
+}
+
 /// The "Options…" sheet in System Settings → Screen Saver.
 final class ConfigSheetController: NSObject {
 
     let window: NSWindow
     private let urlField = NSTextField()
     private let reloadField = NSTextField()
+    private let diagnosticsBox = NSButton(checkboxWithTitle: "Show diagnostics on screen", target: nil, action: nil)
 
     override init() {
         window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 460, height: 190),
+            contentRect: NSRect(x: 0, y: 0, width: 460, height: 220),
             styleMask: [.titled],
             backing: .buffered,
             defer: false
@@ -248,6 +378,7 @@ final class ConfigSheetController: NSObject {
         urlField.stringValue = defaults.string(forKey: "url") ?? EfoilLiveView.defaultURL
         urlField.placeholderString = EfoilLiveView.defaultURL
         reloadField.integerValue = defaults.integer(forKey: "reloadMinutes")
+        diagnosticsBox.state = defaults.bool(forKey: "showDiagnostics") ? .on : .off
         reloadField.formatter = {
             let formatter = NumberFormatter()
             formatter.minimum = 0
@@ -281,7 +412,7 @@ final class ConfigSheetController: NSObject {
         let buttons = NSStackView(views: [resetButton, NSView(), cancelButton, saveButton])
         buttons.distribution = .fill
 
-        let stack = NSStackView(views: [title, grid, hint, buttons])
+        let stack = NSStackView(views: [title, grid, hint, diagnosticsBox, buttons])
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 12
@@ -303,6 +434,7 @@ final class ConfigSheetController: NSObject {
     @objc private func reset() {
         urlField.stringValue = EfoilLiveView.defaultURL
         reloadField.integerValue = EfoilLiveView.defaultReloadMinutes
+        diagnosticsBox.state = .off
     }
 
     @objc private func cancel() {
@@ -314,6 +446,7 @@ final class ConfigSheetController: NSObject {
         let url = urlField.stringValue.trimmingCharacters(in: .whitespaces)
         defaults.set(url.isEmpty ? EfoilLiveView.defaultURL : url, forKey: "url")
         defaults.set(max(0, reloadField.integerValue), forKey: "reloadMinutes")
+        defaults.set(diagnosticsBox.state == .on, forKey: "showDiagnostics")
         defaults.synchronize()
         close()
     }
