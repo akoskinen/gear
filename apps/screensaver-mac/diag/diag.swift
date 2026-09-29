@@ -1,6 +1,6 @@
-// Temporary diagnostic: loads the live page inside the built screensaver view
-// in a real window, captures JS console output/errors and WebGL status, and
-// saves a snapshot.
+// Temporary diagnostic: recreates the screensaver host's situation (a window
+// macOS reports as not visible) and measures whether the Mapbox page keeps
+// animating, with WebKit's occlusion detection on (old build) and off (fix).
 import AppKit
 import ScreenSaver
 import WebKit
@@ -12,11 +12,11 @@ let bundle = Bundle(path: CommandLine.arguments[1])!
 bundle.load()
 let cls = bundle.principalClass as! ScreenSaverView.Type
 let frame = NSRect(x: 0, y: 0, width: 1440, height: 900)
-let window = NSWindow(contentRect: frame, styleMask: [.titled], backing: .buffered, defer: false)
+let window = NSWindow(contentRect: frame, styleMask: [.borderless], backing: .buffered, defer: false)
 let view = cls.init(frame: frame, isPreview: false)!
 window.contentView = view
-window.makeKeyAndOrderFront(nil)
-app.activate(ignoringOtherApps: true)
+window.setFrameOrigin(NSPoint(x: -30000, y: -30000))  // off screen: occluded
+window.orderFrontRegardless()
 view.startAnimation()
 
 func findWebView(_ v: NSView) -> WKWebView? {
@@ -24,43 +24,41 @@ func findWebView(_ v: NSView) -> WKWebView? {
     for s in v.subviews { if let w = findWebView(s) { return w } }
     return nil
 }
-
-let probe = """
-(() => {
-  const out = {title: document.title, url: location.href};
-  out.scripts = [...document.scripts].map(s => s.src || ('inline:' + s.textContent.slice(0, 120)));
-  out.links = [...document.querySelectorAll('link[rel=stylesheet]')].map(l => l.href);
-  out.canvases = [...document.querySelectorAll('canvas')].map(c => ({w: c.width, h: c.height, cls: c.className, id: c.id}));
-  const t = document.createElement('canvas');
-  const gl = t.getContext('webgl2') || t.getContext('webgl');
-  out.webgl = gl ? (gl.getParameter(gl.VERSION) + ' / ' + gl.getParameter(gl.RENDERER)) : 'NO WEBGL';
-  out.globals = ['Cesium','mapboxgl','maplibregl','THREE','L','google','ol','deck'].filter(k => k in window);
-  out.errors = window.__errs || [];
-  out.text = (document.body ? document.body.innerText : '').slice(0, 400);
-  out.html = document.documentElement.outerHTML.slice(0, 3000);
-  return JSON.stringify(out, null, 1);
-})()
-"""
+func setOcclusionDetection(_ wv: WKWebView, _ on: Bool) {
+    let sel = NSSelectorFromString("_setWindowOcclusionDetectionEnabled:")
+    let m = class_getInstanceMethod(WKWebView.self, sel)!
+    typealias F = @convention(c) (AnyObject, Selector, Bool) -> Void
+    unsafeBitCast(method_getImplementation(m), to: F.self)(wv, sel, on)
+}
 
 var tick = 0
+var mark = 0
 Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { t in
     tick += 1
-    guard let wv = findWebView(view) else { if tick > 60 { exit(2) }; return }
-    if tick == 2 {
-        // Capture errors from now on (page already started loading).
-        wv.evaluateJavaScript("window.__errs=[];addEventListener('error',e=>__errs.push('error: '+e.message+' @'+(e.filename||'')+':'+e.lineno),true);addEventListener('unhandledrejection',e=>__errs.push('rejection: '+(e.reason&&e.reason.message||e.reason)));['error','warn'].forEach(k=>{const o=console[k];console[k]=(...a)=>{__errs.push(k+': '+a.join(' '));o.apply(console,a)}});1")
-    }
-    if tick == 12 || tick == 40 {
-        wv.evaluateJavaScript(probe) { r, e in
-            print("=== probe at \(tick)s alpha=\(wv.alphaValue) ===")
-            print(r ?? "nil", e ?? "")
+    guard let wv = findWebView(view) else { return }
+    switch tick {
+    case 3:
+        print("window visible=\(window.isVisible) occlusionVisible=\(window.occlusionState.contains(.visible))")
+        wv.evaluateJavaScript("window.__raf=0;(function f(){__raf++;requestAnimationFrame(f)})();1")
+    case 14:
+        print("-- phase A: occlusion detection ON (how the first build behaved)")
+        setOcclusionDetection(wv, true)
+    case 16, 26:
+        wv.evaluateJavaScript("__raf") { r, _ in mark = (r as? Int) ?? -1 }
+    case 21, 31:
+        let label = tick == 21 ? "A (old)" : "B (fix)"
+        wv.evaluateJavaScript("JSON.stringify({raf: __raf, vis: document.visibilityState, hidden: document.hidden})") { r, _ in
+            let s = r as? String ?? "?"
+            let raf = (try? JSONSerialization.jsonObject(with: Data(s.utf8)) as? [String: Any])?["raf"] as? Int ?? -1
+            print("phase \(label): animation frames in 5 s = \(raf - mark)  page=\(s)")
         }
-        wv.takeSnapshot(with: nil) { img, _ in
-            guard let img, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff) else { return }
-            try? rep.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: "snap-\(tick).png"))
-            print("saved snap-\(tick).png")
+        if tick == 21 {
+            print("-- phase B: occlusion detection OFF (the fix)")
+            setOcclusionDetection(wv, false)
         }
+    case 33:
+        t.invalidate(); exit(0)
+    default: break
     }
-    if tick == 45 { t.invalidate(); exit(0) }
 }
 app.run()

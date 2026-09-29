@@ -15,6 +15,7 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
     private var reloadTimer: Timer?
     private var retryTimer: Timer?
     private var configController: ConfigSheetController?
+    private var activity: NSObjectProtocol?
 
     // MARK: - Settings
 
@@ -77,12 +78,18 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
 
     override func startAnimation() {
         super.startAnimation()
+        if activity == nil {
+            activity = ProcessInfo.processInfo.beginActivity(
+                options: [.userInitiatedAllowingIdleSystemSleep, .latencyCritical],
+                reason: "Rendering the eFoil Racing live view"
+            )
+        }
         loadPage()
     }
 
     override func stopAnimation() {
         super.stopAnimation()
-        tearDown()
+        stop()
     }
 
     override func animateOneFrame() {
@@ -90,7 +97,7 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
     }
 
     @objc private func screenSaverWillStop() {
-        tearDown()
+        stop()
     }
 
     // Keep mouse and keyboard events on the screensaver so any input
@@ -107,8 +114,19 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
         let config = WKWebViewConfiguration()
         config.mediaTypesRequiringUserActionForPlayback = .all
         config.websiteDataStore = .default()
+        // Keep timers and the web content process at full speed even when
+        // WebKit believes the page is in the background.
+        Self.setPrivateFlag(config.preferences, "_setHiddenPageDOMTimerThrottlingEnabled:", false)
+        Self.setPrivateFlag(config.preferences, "_setPageVisibilityBasedProcessSuppressionEnabled:", false)
 
         let webView = WKWebView(frame: bounds, configuration: config)
+        // Since macOS Sonoma the screensaver runs in a helper process and is
+        // shown on screen through a remote layer, so its window never counts
+        // as visible. WebKit then treats the page as hidden and stops
+        // requestAnimationFrame, which is what WebGL maps (the Mapbox globe)
+        // draw with: the page shows, the globe stays black. Tell WebKit to
+        // ignore window occlusion so the page always renders.
+        Self.setPrivateFlag(webView, "_setWindowOcclusionDetectionEnabled:", false)
         webView.autoresizingMask = [.width, .height]
         webView.navigationDelegate = self
         webView.setValue(false, forKey: "drawsBackground")
@@ -131,6 +149,14 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
         }
     }
 
+    private func stop() {
+        tearDown()
+        if let activity {
+            ProcessInfo.processInfo.endActivity(activity)
+            self.activity = nil
+        }
+    }
+
     private func tearDown() {
         reloadTimer?.invalidate()
         reloadTimer = nil
@@ -143,6 +169,18 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
             webView.removeFromSuperview()
         }
         webView = nil
+    }
+
+    /// Calls a private WebKit `-set…:(BOOL)` method if this macOS has it.
+    static func setPrivateFlag(_ object: NSObject, _ selectorName: String, _ value: Bool) {
+        let selector = NSSelectorFromString(selectorName)
+        guard object.responds(to: selector),
+              let method = class_getInstanceMethod(type(of: object), selector) else {
+            NSLog("EfoilLive: %@ not available", selectorName)
+            return
+        }
+        typealias Setter = @convention(c) (AnyObject, Selector, Bool) -> Void
+        unsafeBitCast(method_getImplementation(method), to: Setter.self)(object, selector, value)
     }
 
     private func showStatus(_ text: String) {

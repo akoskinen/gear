@@ -7,15 +7,6 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Fetch page
-        run: |
-          curl -sSL -D - https://api.efoilracing.nl/live -o page.html | head -30
-          echo "---- HTML ----"; head -c 6000 page.html
       - run: apps/screensaver-mac/build.sh
-      - name: Load page in the screensaver view
+      - name: Hidden-window rendering test
         run: swift apps/screensaver-mac/diag/diag.swift "apps/screensaver-mac/build/eFoil Racing Live.saver"
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: diag
-          path: "*.png"
