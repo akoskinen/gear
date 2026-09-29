@@ -16,6 +16,10 @@ Gear tracking and rider management for an eFoil racing team.
 - [docs/09-firestore-data-model.md](docs/09-firestore-data-model.md) — collections, roles, the movement pipeline, callables and triggers.
 - [docs/10-inventory-ux.md](docs/10-inventory-ux.md) — Axel's inventory experience, redesigned around his real warehouse sheet: places, walks, two tracking modes, reorder, import.
 
+## Mac screensaver
+
+- `apps/screensaver-mac/` — a macOS screensaver showing the live rider view. See its [README](apps/screensaver-mac/README.md).
+
 ## Backend
 
 Firebase, in the `efoilracingprofiles` project. Everything lives under `gearTeams/{teamId}` in Firestore.

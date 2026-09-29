@@ -1,0 +1,30 @@
+name: Mac screensaver
+
+on:
+  push:
+    paths:
+      - "apps/screensaver-mac/**"
+      - ".github/workflows/screensaver-mac.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: apps/screensaver-mac/build.sh
+
+      - name: Smoke test
+        working-directory: apps/screensaver-mac
+        run: swift smoke-test.swift "build/eFoil Racing Live.saver"
+
+      - name: Zip
+        working-directory: apps/screensaver-mac/build
+        run: ditto -c -k --keepParent "eFoil Racing Live.saver" "eFoil-Racing-Live-saver.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eFoil-Racing-Live-screensaver
+          path: apps/screensaver-mac/build/eFoil-Racing-Live-saver.zip
