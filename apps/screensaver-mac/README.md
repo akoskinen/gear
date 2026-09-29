@@ -24,6 +24,16 @@ and how often the page reloads (default every 30 minutes; 0 turns it off).
 If the page can't load, the screensaver shows "retrying" and tries again
 every 30 seconds.
 
+**Show diagnostics on screen** adds a panel in the bottom-left corner showing
+what the screensaver and the page see: window visibility, WebGL, animation
+frame rate, the map canvas size, JavaScript errors and load events. The same
+information goes to the system log; to follow it live, run this in Terminal
+while the screensaver is running:
+
+```
+log stream --predicate 'eventMessage CONTAINS "EfoilLive"'
+```
+
 ## How it works
 
 `Sources/EfoilLiveView.swift` is a `ScreenSaverView` hosting a `WKWebView`.
