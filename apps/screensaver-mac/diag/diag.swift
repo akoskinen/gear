@@ -41,17 +41,31 @@ func analyse(_ path: String) {
     print("capture \(rep.pixelsWide)x\(rep.pixelsHigh): dark \(100 * dark / max(total, 1))%, coloured \(100 * colour / max(total, 1))%")
 }
 
+func findWebView(_ v: NSView) -> WKWebView? {
+    if let w = v as? WKWebView { return w }
+    for s in v.subviews { if let w = findWebView(s) { return w } }
+    return nil
+}
+
+func measure(_ label: String) {
+    guard let wv = findWebView(view) else { print("\(label): no web view"); return }
+    let w = wv.window!
+    wv.evaluateJavaScript("new Promise(r=>{let n=0,t0=performance.now();(function f(){n++;if(performance.now()-t0<3000)requestAnimationFrame(f);else r(JSON.stringify({fps:Math.round(n/3),vis:document.visibilityState}))})()})") { _, _ in }
+    wv.callAsyncJavaScript("return await new Promise(r=>{let n=0,t0=performance.now();(function f(){n++;if(performance.now()-t0<3000)requestAnimationFrame(f);else r(JSON.stringify({fps:Math.round(n/3),vis:document.visibilityState}))})()})", arguments: [:], in: nil, in: .page) { result in
+        print("\(label): \((try? result.get()) ?? "err")  alpha=\(wv.alphaValue) winVisible=\(w.isVisible) occlusionVisible=\(w.occlusionState.contains(.visible)) level=\(w.level.rawValue)")
+    }
+}
+
+let steps: [(Int, String, () -> Void)] = [
+    (12, "A screensaver level, as shipped", {}),
+    (18, "B normal window level", { window.level = .normal }),
+    (24, "C back to screensaver level", { window.level = .screenSaver }),
+    (30, "D key + main window", { app.activate(ignoringOtherApps: true); window.makeKeyAndOrderFront(nil) }),
+]
 var tick = 0
 Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { t in
     tick += 1
-    if tick == 30 {
-        for l in labels(view) where l.stringValue.contains("diagnostics") { print(l.stringValue) }
-        let p = Process()
-        p.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-        p.arguments = ["-x", "shot.png"]
-        try? p.run(); p.waitUntilExit()
-        analyse("shot.png")
-        t.invalidate(); exit(0)
-    }
+    for (at, label, change) in steps where at == tick { change(); DispatchQueue.main.asyncAfter(deadline: .now() + 1) { measure(label) } }
+    if tick == 38 { t.invalidate(); exit(0) }
 }
 app.run()
