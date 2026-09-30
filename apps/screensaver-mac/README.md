@@ -12,7 +12,7 @@ Shows the live view of riders broadcasting their rides
      `apps/screensaver-mac/build.sh --install`
 2. The download is not notarised by Apple, so clear the quarantine flag first:
    ```
-   xattr -dr com.apple.quarantine ~/Downloads/"eFoil Racing Live.saver"
+   xattr -dr com.apple.quarantine ~/Downloads/eFoil\ Racing\ Live.saver
    ```
 3. Double-click the `.saver` and choose to install it for this user.
 4. System Settings → Screen Saver → pick **eFoil Racing Live**.
