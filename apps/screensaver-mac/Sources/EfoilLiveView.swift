@@ -134,12 +134,17 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
         tearDown()
 
         let config = WKWebViewConfiguration()
-        config.mediaTypesRequiringUserActionForPlayback = .all
+        // A screensaver never gets a click, so video (the riders' live
+        // streams) must be allowed to start on its own. Sound stays off:
+        // the mute script below silences every audio and video element.
+        config.mediaTypesRequiringUserActionForPlayback = []
         config.websiteDataStore = .default()
         // Keep timers and the web content process at full speed even when
         // WebKit believes the page is in the background.
         Self.setPrivateFlag(config.preferences, "_setHiddenPageDOMTimerThrottlingEnabled:", false)
         Self.setPrivateFlag(config.preferences, "_setPageVisibilityBasedProcessSuppressionEnabled:", false)
+        config.userContentController.addUserScript(WKUserScript(
+            source: Self.muteScript, injectionTime: .atDocumentStart, forMainFrameOnly: false))
         config.userContentController.addUserScript(WKUserScript(
             source: Self.pageProbeScript, injectionTime: .atDocumentStart, forMainFrameOnly: true))
         config.userContentController.add(WeakMessageHandler(self), name: "efoil")
@@ -151,6 +156,7 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
         // requestAnimationFrame, which the Mapbox globe draws with. Tell
         // WebKit to ignore window occlusion so the page keeps rendering.
         Self.setPrivateFlag(webView, "_setWindowOcclusionDetectionEnabled:", false)
+        Self.mutePage(webView)
         webView.autoresizingMask = [.width, .height]
         webView.navigationDelegate = self
         webView.setValue(false, forKey: "drawsBackground")
@@ -205,6 +211,32 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
             webView.removeFromSuperview()
         }
         webView = nil
+    }
+
+    /// Mutes every audio and video element as soon as it appears, in all
+    /// frames, so streams can autoplay without making a sound.
+    static let muteScript = """
+    (() => {
+      const mute = el => { el.muted = true; el.defaultMuted = true; };
+      const muteAll = root => root.querySelectorAll && root.querySelectorAll('video, audio').forEach(mute);
+      const origPlay = HTMLMediaElement.prototype.play;
+      HTMLMediaElement.prototype.play = function () { mute(this); return origPlay.apply(this, arguments); };
+      ['loadstart', 'play', 'volumechange'].forEach(type => document.addEventListener(type, e => {
+        if (e.target instanceof HTMLMediaElement && !e.target.muted) mute(e.target);
+      }, true));
+      new MutationObserver(records => records.forEach(r => r.addedNodes.forEach(n => {
+        if (n instanceof HTMLMediaElement) mute(n); else muteAll(n);
+      }))).observe(document, { childList: true, subtree: true });
+    })();
+    """
+
+    /// Also mutes the whole page through WebKit, where this macOS allows it.
+    static func mutePage(_ webView: WKWebView) {
+        let selector = NSSelectorFromString("_setPageMuted:")
+        guard webView.responds(to: selector),
+              let method = class_getInstanceMethod(WKWebView.self, selector) else { return }
+        typealias Setter = @convention(c) (AnyObject, Selector, UInt) -> Void
+        unsafeBitCast(method_getImplementation(method), to: Setter.self)(webView, selector, 1) // audio muted
     }
 
     /// Calls a private WebKit `-set…:(BOOL)` method if this macOS has it.
