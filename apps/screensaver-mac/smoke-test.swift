@@ -76,7 +76,8 @@ if CommandLine.arguments.count > 2 {
         return false
     }
     func number(_ key: String, _ s: String) -> Int {
-        Int(s.components(separatedBy: " ").first { $0.hasPrefix(key + "=") }?.dropFirst(key.count + 1) ?? "") ?? 0
+        guard let range = s.range(of: key + #"=\d+"#, options: .regularExpression) else { return 0 }
+        return Int(s[range].dropFirst(key.count + 1)) ?? 0
     }
 
     view.startAnimation()
