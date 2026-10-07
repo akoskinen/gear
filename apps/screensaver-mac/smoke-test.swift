@@ -1,5 +1,5 @@
 // Loads the built .saver the way macOS does and checks the screensaver
-// view can be created. Run: swift smoke-test.swift "build/eFoil Racing Live.saver"
+// view can be created. Run: swift smoke-test.swift "build/eFoil Racing Live.saver" [prepared-podcast-folder]
 import AppKit
 import ScreenSaver
 import WebKit
@@ -48,4 +48,61 @@ guard videoState.contains("\"paused\":false"), videoState.contains("\"muted\":tr
     fatalError("A live stream video did not autoplay muted: \(videoState)")
 }
 view.stopAnimation()
+
+// Podcast mode: with nobody live, random clips play with the sponsor overlays
+// in turn; when a rider goes live it returns to the map. Test media comes from
+// the folder prepared by prepare-podcast.sh (second argument).
+if CommandLine.arguments.count > 2 {
+    let folder = URL(fileURLWithPath: CommandLine.arguments[2], isDirectory: true)
+    let sessions = folder.appendingPathComponent("sessions.json")
+    try! #"{"data": []}"#.write(to: sessions, atomically: true, encoding: .utf8)
+    let stub = folder.appendingPathComponent("stub.html")
+    try! "<body style='background:#123'>live map stand-in</body>".write(to: stub, atomically: true, encoding: .utf8)
+
+    let defaults = ScreenSaverDefaults(forModuleWithName: "racing.efoil.live-screensaver")!
+    defaults.set(stub.absoluteString, forKey: "url")
+    defaults.set(sessions.absoluteString, forKey: "sessionsURL")
+    defaults.set(folder.absoluteString, forKey: "podcastURL")
+    defaults.set(2, forKey: "pollSeconds")
+    defaults.synchronize()
+
+    func state() -> String { view.value(forKey: "debugState") as? String ?? "" }
+    func waitFor(_ seconds: Double, _ condition: (String) -> Bool) -> Bool {
+        let end = Date().addingTimeInterval(seconds)
+        while Date() < end {
+            if condition(state()) { return true }
+            RunLoop.main.run(until: Date().addingTimeInterval(0.25))
+        }
+        return false
+    }
+    func number(_ key: String, _ s: String) -> Int {
+        Int(s.components(separatedBy: " ").first { $0.hasPrefix(key + "=") }?.dropFirst(key.count + 1) ?? "") ?? 0
+    }
+
+    view.startAnimation()
+    guard waitFor(20, { $0.contains("mode=podcast") && $0.contains("playing=true") }) else {
+        fatalError("Podcast did not start with nobody live: \(state())")
+    }
+    print("podcast playing: \(state())")
+    var adsSeen: [String] = []
+    guard waitFor(45, { s in
+        if s.contains("ad=true"), let name = s.components(separatedBy: " ").first(where: { $0.hasPrefix("lastAd=") })?.dropFirst(7),
+           adsSeen.last != String(name) { adsSeen.append(String(name)) }
+        return number("clips", s) >= 4
+    }) else {
+        fatalError("Clips did not keep coming: \(state())")
+    }
+    print("after 4 clips: \(state()), sponsors in order: \(adsSeen)")
+    guard adsSeen.starts(with: ["ad_1", "ad_2", "ad_10"]) else {
+        fatalError("Sponsors did not rotate in folder-number order: \(adsSeen)")
+    }
+
+    try! #"{"data": [{"id": "test-rider"}]}"#.write(to: sessions, atomically: true, encoding: .utf8)
+    guard waitFor(10, { $0.contains("mode=globe") }) else {
+        fatalError("Did not return to the map when a rider went live: \(state())")
+    }
+    print("rider live: \(state())")
+    view.stopAnimation()
+    defaults.removePersistentDomain(forName: "racing.efoil.live-screensaver")
+}
 print("OK: \(cls) loaded, hasConfigureSheet=\(view.hasConfigureSheet), sheet=\(view.configureSheet != nil)")

@@ -3,12 +3,16 @@ import ScreenSaver
 import WebKit
 
 /// A macOS screensaver that shows the eFoil Racing live view
-/// (riders broadcasting their rides) full screen.
+/// (riders broadcasting their rides) full screen, in the page's TV mode which
+/// spotlights each live rider in turn. When nobody is live it plays random
+/// clips of the podcast, with sponsor overlays, if a podcast folder is set.
 @objc(EfoilLiveView)
 final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
 
-    static let defaultURL = "https://api.efoilracing.nl/live"
+    static let defaultURL = "https://api.efoilracing.nl/live?tv=1"
     static let defaultReloadMinutes = 30
+
+    private enum Mode: String { case globe, podcast }
 
     private var webView: WKWebView?
     private let statusLabel = NSTextField(labelWithString: "")
@@ -21,6 +25,14 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
     private var pageReport: [String: Any] = [:]
     private var events: [String] = []
 
+    private var mode = Mode.globe
+    private var pollTimer: Timer?
+    private var liveRiders: Int?
+    private var emptyPolls = 0
+    private var manifest: PodcastManifest?
+    private var podcastView: PodcastView?
+    private var podcastPausedUntil = Date.distantPast
+
     // MARK: - Settings
 
     static var defaults: ScreenSaverDefaults {
@@ -30,6 +42,9 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
             "url": defaultURL,
             "reloadMinutes": defaultReloadMinutes,
             "showDiagnostics": false,
+            "podcastURL": "",
+            "playSound": false,
+            "pollSeconds": 15,
         ])
         return defaults
     }
@@ -45,6 +60,25 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
 
     private var showDiagnostics: Bool {
         Self.defaults.bool(forKey: "showDiagnostics") && !isPreview
+    }
+
+    /// The podcast folder on the web, ending in "/". Empty turns the podcast off.
+    private var podcastBaseURL: URL? {
+        var string = (Self.defaults.string(forKey: "podcastURL") ?? "").trimmingCharacters(in: .whitespaces)
+        guard !string.isEmpty else { return nil }
+        if !string.hasSuffix("/") { string += "/" }
+        return URL(string: string)
+    }
+
+    /// The list of riders sharing live, the same one the page polls.
+    private var sessionsURL: URL? {
+        if let override = Self.defaults.string(forKey: "sessionsURL"), let url = URL(string: override) {
+            return url
+        }
+        guard var parts = URLComponents(url: pageURL, resolvingAgainstBaseURL: false), parts.host != nil else { return nil }
+        parts.path = "/api/live/sessions"
+        parts.query = nil
+        return parts.url
     }
 
     // MARK: - Lifecycle
@@ -107,6 +141,7 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
             )
         }
         loadPage()
+        if !isPreview { startPolling() }
     }
 
     override func stopAnimation() {
@@ -188,6 +223,11 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
     }
 
     private func stop() {
+        pollTimer?.invalidate()
+        pollTimer = nil
+        removePodcast()
+        mode = .globe
+        emptyPolls = 0
         tearDown()
         if let activity {
             ProcessInfo.processInfo.endActivity(activity)
@@ -289,6 +329,123 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
         scheduleRetry()
     }
 
+    // MARK: - Live riders and the podcast
+
+    private func startPolling() {
+        pollTimer?.invalidate()
+        loadManifest()
+        let seconds = max(2, Self.defaults.double(forKey: "pollSeconds"))
+        pollTimer = Timer.scheduledTimer(withTimeInterval: seconds, repeats: true) { [weak self] _ in
+            self?.pollRiders()
+        }
+        pollRiders()
+    }
+
+    private func pollRiders() {
+        guard let url = sessionsURL else { return }
+        var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 10)
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        URLSession.shared.dataTask(with: request) { [weak self] data, _, _ in
+            let list = data.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }?["data"] as? [Any]
+            DispatchQueue.main.async { self?.ridersUpdated(list?.count) }
+        }.resume()
+    }
+
+    private func ridersUpdated(_ count: Int?) {
+        guard pollTimer != nil else { return }
+        guard let count else { return }   // offline blip: stay as we are
+        if count != liveRiders { log("riders live: \(count)") }
+        liveRiders = count
+        if count > 0 {
+            emptyPolls = 0
+            if mode == .podcast { showGlobe() }
+        } else {
+            emptyPolls += 1
+            // Two empty answers in a row, so a rider's dropped signal doesn't flip the view.
+            if mode == .globe, emptyPolls >= 2, Date() > podcastPausedUntil, manifest != nil {
+                showPodcast()
+            }
+        }
+    }
+
+    private func loadManifest() {
+        guard let base = podcastBaseURL, let url = URL(string: "manifest.json", relativeTo: base) else {
+            manifest = nil
+            return
+        }
+        let request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 20)
+        URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
+            var loaded: PodcastManifest?
+            var problem = error?.localizedDescription
+            if let data {
+                do { loaded = try JSONDecoder().decode(PodcastManifest.self, from: data) } catch { problem = "manifest.json: \(error)" }
+            }
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if let loaded, !loaded.episodes.isEmpty {
+                    self.manifest = loaded
+                    self.log("podcast: \(loaded.episodes.count) episodes, \(loaded.ads?.count ?? 0) ads")
+                } else {
+                    self.log("podcast unavailable: \(problem ?? "no episodes")")
+                }
+            }
+        }.resume()
+    }
+
+    private func showPodcast() {
+        guard let manifest, let base = podcastBaseURL, podcastView == nil else { return }
+        mode = .podcast
+        log("nobody live: playing the podcast")
+        let podcast = PodcastView(frame: bounds, baseURL: base, manifest: manifest,
+                                  soundOn: Self.defaults.bool(forKey: "playSound"))
+        podcast.autoresizingMask = [.width, .height]
+        podcast.log = { [weak self] in self?.log($0) }
+        podcast.onGiveUp = { [weak self] in
+            self?.podcastPausedUntil = Date().addingTimeInterval(600)
+            self?.showGlobe()
+        }
+        podcast.alphaValue = 0
+        addSubview(podcast, positioned: .below, relativeTo: statusLabel)
+        podcastView = podcast
+        podcast.start()
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = 1.2
+            podcast.animator().alphaValue = 1
+        }, completionHandler: { [weak self] in
+            // Hidden, the page stops drawing and polling until we come back.
+            if self?.mode == .podcast { self?.webView?.isHidden = true }
+        })
+    }
+
+    private func showGlobe() {
+        guard mode == .podcast else { return }
+        mode = .globe
+        log("back to the live map")
+        webView?.isHidden = false
+        guard let podcast = podcastView else { return }
+        podcastView = nil
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = 1.2
+            podcast.animator().alphaValue = 0
+        }, completionHandler: {
+            podcast.stop()
+            podcast.removeFromSuperview()
+        })
+        loadManifest()   // pick up new episodes and ads before the next quiet spell
+    }
+
+    private func removePodcast() {
+        podcastView?.stop()
+        podcastView?.removeFromSuperview()
+        podcastView = nil
+        webView?.isHidden = false
+    }
+
+    /// For the diagnostics panel and the tests.
+    @objc var debugState: String {
+        "mode=\(mode.rawValue) riders=\(liveRiders.map(String.init) ?? "?") podcast=\(podcastView?.state ?? "off")"
+    }
+
     // MARK: - Diagnostics
 
     /// Runs inside the page and reports, every 2 seconds, what the page sees:
@@ -342,7 +499,7 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
         NSLog("EfoilLive: %@", message)
         let time = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium)
         events.append("\(time) \(message)")
-        if events.count > 5 { events.removeFirst() }
+        if events.count > 8 { events.removeFirst() }
     }
 
     private func updateDiagnostics() {
@@ -361,6 +518,7 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
             lines.append("map canvas: \(r["canvas"] ?? "?")  context lost: \(r["contextLost"] ?? 0)")
             for e in (r["errors"] as? [String]) ?? [] { lines.append("  ! \(e)") }
         }
+        lines.append(debugState)
         lines.append("events:")
         lines += events.map { "  \($0)" }
         diagnosticsLabel.stringValue = lines.joined(separator: "\n")
@@ -395,11 +553,13 @@ final class ConfigSheetController: NSObject {
     let window: NSWindow
     private let urlField = NSTextField()
     private let reloadField = NSTextField()
+    private let podcastField = NSTextField()
+    private let soundBox = NSButton(checkboxWithTitle: "Play podcast sound (and the sponsor sounds)", target: nil, action: nil)
     private let diagnosticsBox = NSButton(checkboxWithTitle: "Show diagnostics on screen", target: nil, action: nil)
 
     override init() {
         window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 460, height: 220),
+            contentRect: NSRect(x: 0, y: 0, width: 520, height: 320),
             styleMask: [.titled],
             backing: .buffered,
             defer: false
@@ -411,6 +571,9 @@ final class ConfigSheetController: NSObject {
         urlField.placeholderString = EfoilLiveView.defaultURL
         reloadField.integerValue = defaults.integer(forKey: "reloadMinutes")
         diagnosticsBox.state = defaults.bool(forKey: "showDiagnostics") ? .on : .off
+        podcastField.stringValue = defaults.string(forKey: "podcastURL") ?? ""
+        podcastField.placeholderString = "https://… folder with manifest.json (empty = off)"
+        soundBox.state = defaults.bool(forKey: "playSound") ? .on : .off
         reloadField.formatter = {
             let formatter = NumberFormatter()
             formatter.minimum = 0
@@ -425,15 +588,18 @@ final class ConfigSheetController: NSObject {
         let grid = NSGridView(views: [
             [NSTextField(labelWithString: "Page URL:"), urlField],
             [NSTextField(labelWithString: "Reload every (min):"), reloadField],
+            [NSTextField(labelWithString: "Podcast folder:"), podcastField],
         ])
         grid.column(at: 0).xPlacement = .trailing
         grid.rowSpacing = 10
-        urlField.widthAnchor.constraint(equalToConstant: 290).isActive = true
+        urlField.widthAnchor.constraint(equalToConstant: 340).isActive = true
+        podcastField.widthAnchor.constraint(equalToConstant: 340).isActive = true
         reloadField.widthAnchor.constraint(equalToConstant: 60).isActive = true
 
-        let hint = NSTextField(labelWithString: "Set reload to 0 to never reload the page.")
+        let hint = NSTextField(wrappingLabelWithString: "Set reload to 0 to never reload the page. When nobody is live, random podcast clips play from the podcast folder.")
         hint.font = .systemFont(ofSize: 11)
         hint.textColor = .secondaryLabelColor
+        hint.preferredMaxLayoutWidth = 470
 
         let resetButton = NSButton(title: "Reset", target: self, action: #selector(reset))
         let cancelButton = NSButton(title: "Cancel", target: self, action: #selector(cancel))
@@ -444,7 +610,7 @@ final class ConfigSheetController: NSObject {
         let buttons = NSStackView(views: [resetButton, NSView(), cancelButton, saveButton])
         buttons.distribution = .fill
 
-        let stack = NSStackView(views: [title, grid, hint, diagnosticsBox, buttons])
+        let stack = NSStackView(views: [title, grid, hint, soundBox, diagnosticsBox, buttons])
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 12
@@ -467,6 +633,7 @@ final class ConfigSheetController: NSObject {
         urlField.stringValue = EfoilLiveView.defaultURL
         reloadField.integerValue = EfoilLiveView.defaultReloadMinutes
         diagnosticsBox.state = .off
+        soundBox.state = .off
     }
 
     @objc private func cancel() {
@@ -479,6 +646,8 @@ final class ConfigSheetController: NSObject {
         defaults.set(url.isEmpty ? EfoilLiveView.defaultURL : url, forKey: "url")
         defaults.set(max(0, reloadField.integerValue), forKey: "reloadMinutes")
         defaults.set(diagnosticsBox.state == .on, forKey: "showDiagnostics")
+        defaults.set(podcastField.stringValue.trimmingCharacters(in: .whitespaces), forKey: "podcastURL")
+        defaults.set(soundBox.state == .on, forKey: "playSound")
         defaults.synchronize()
         close()
     }

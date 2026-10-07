@@ -16,9 +16,26 @@ jobs:
       - name: Build
         run: apps/screensaver-mac/build.sh
 
+      - name: Make test podcast media
+        run: |
+          command -v ffmpeg >/dev/null || brew install ffmpeg
+          src="$RUNNER_TEMP/podcast-src"
+          mkdir -p "$src/episodes"
+          for n in 1 2; do
+            ffmpeg -nostdin -loglevel error -f lavfi -i "testsrc2=size=1280x720:rate=25:duration=150" \
+              -f lavfi -i "sine=frequency=$((300 * n)):duration=150" -shortest "$src/episodes/00$n - Test episode $n.mov"
+          done
+          for n in 10 2 1; do
+            mkdir -p "$src/ads/ad_$n"
+            ffmpeg -nostdin -loglevel error -f lavfi -i "color=c=red@0.4:size=1920x1080,format=rgba" -frames:v 1 "$src/ads/ad_$n/Sponsor $n.png"
+            ffmpeg -nostdin -loglevel error -f lavfi -i "sine=frequency=880:duration=3" "$src/ads/ad_$n/sponsor.m4a"
+          done
+          CLIP_SECONDS=10 apps/screensaver-mac/podcast/prepare-podcast.sh "$src" "$RUNNER_TEMP/podcast"
+          cat "$RUNNER_TEMP/podcast/manifest.json"
+
       - name: Smoke test
         working-directory: apps/screensaver-mac
-        run: swift smoke-test.swift "build/eFoil Racing Live.saver"
+        run: swift smoke-test.swift "build/eFoil Racing Live.saver" "$RUNNER_TEMP/podcast"
 
       - name: Zip
         working-directory: apps/screensaver-mac/build
