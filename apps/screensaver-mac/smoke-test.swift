@@ -14,6 +14,10 @@ guard let cls = bundle.principalClass as? ScreenSaverView.Type else {
 guard let view = cls.init(frame: NSRect(x: 0, y: 0, width: 800, height: 500), isPreview: false) else {
     fatalError("Screensaver view failed to initialise")
 }
+// Show it in a window, as macOS does; media won't play in a hidden page.
+let window = NSWindow(contentRect: view.frame, styleMask: [.borderless], backing: .buffered, defer: false)
+window.contentView = view
+window.orderFrontRegardless()
 view.startAnimation()
 RunLoop.main.run(until: Date().addingTimeInterval(3))
 
