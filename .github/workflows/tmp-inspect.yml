@@ -9,4 +9,4 @@ jobs:
       - run: |
           curl -sSL https://api.efoilracing.nl/live -o page.html
           echo "== lines mentioning tour"
-          grep -n -i "tour" page.html | cut -c1-400 | head -80
+          grep -n -i "tour" page.html | head -3; echo "== 640-670"; sed -n "640,670p" page.html; echo "== 1215-1275"; sed -n "1215,1275p" page.html; echo "== tv css"; grep -n "body.tv" page.html | cut -c1-300 | head -30
