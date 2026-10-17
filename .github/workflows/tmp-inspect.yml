@@ -1,0 +1,12 @@
+name: tmp inspect live page
+on:
+  push:
+    paths: [".github/workflows/tmp-inspect.yml"]
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl -sSL https://api.efoilracing.nl/live -o page.html
+          echo "== lines mentioning tour"
+          grep -n -i "tour" page.html | cut -c1-400 | head -80
