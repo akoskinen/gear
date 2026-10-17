@@ -1,8 +1,12 @@
 # eFoil Racing Live — Mac screensaver
 
 Shows the live view of riders broadcasting their rides full screen as a macOS
-screensaver, in the page's TV mode (<https://api.efoilracing.nl/live?tv=1>),
-which spotlights each live rider in turn. When nobody is live it can play
+screensaver, as the page's tour (<https://api.efoilracing.nl/live?tv=1&tour=30>):
+the camera flies to each live rider and stays 30 seconds, and with nobody live
+it pulls out and spins the globe. `tv=1` hides the buttons, menu and cursor.
+Change `tour=30` to stay longer or shorter on each rider (10–600 seconds).
+
+If a podcast folder is set, a quiet spell switches from the spinning globe to
 random clips of the eFoil Racing Experience podcast with sponsor overlays.
 
 ## Install

@@ -19,15 +19,60 @@ let window = NSWindow(contentRect: view.frame, styleMask: [.borderless], backing
 window.contentView = view
 window.orderFrontRegardless()
 view.startAnimation()
-RunLoop.main.run(until: Date().addingTimeInterval(3))
 
-// A live stream arrives as a MediaStream on a <video> that autoplays with no
-// click. Check, with the screensaver's own web view settings, that such a
-// video starts playing and is muted.
 func findWebView(_ v: NSView) -> WKWebView? {
     if let w = v as? WKWebView { return w }
     return v.subviews.lazy.compactMap(findWebView).first
 }
+func runJS(_ webView: WKWebView, _ script: String) -> String {
+    var out: String?
+    webView.evaluateJavaScript(script) { result, error in out = (result as? String) ?? "error: \(String(describing: error))" }
+    let end = Date().addingTimeInterval(5)
+    while out == nil, Date() < end { RunLoop.main.run(until: Date().addingTimeInterval(0.1)) }
+    return out ?? "timeout"
+}
+
+// The default page is the live map's tour in TV mode. Check the page took
+// both, and that with nobody live the globe turns (two snapshots differ).
+RunLoop.main.run(until: Date().addingTimeInterval(15))
+guard let tourView = findWebView(view) else { fatalError("No web view") }
+let modes = runJS(tourView, "JSON.stringify({tv: document.body.classList.contains('tv'), tour: !!(document.getElementById('tour') || {}).checked})")
+print("live page: \(modes)  \(view.value(forKey: "debugState") ?? "")")
+guard modes.contains("\"tv\":true"), modes.contains("\"tour\":true") else {
+    fatalError("The live page did not start in TV mode with the tour on: \(modes)")
+}
+func snapshot(_ webView: WKWebView) -> [UInt8] {
+    var pixels: [UInt8] = []
+    var done = false
+    webView.takeSnapshot(with: nil) { image, _ in
+        defer { done = true }
+        guard let image, let cg = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return }
+        let w = 96, h = 60
+        var buffer = [UInt8](repeating: 0, count: w * h)
+        let context = CGContext(data: &buffer, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w,
+                                space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue)!
+        context.draw(cg, in: CGRect(x: 0, y: 0, width: w, height: h))
+        pixels = buffer
+    }
+    let end = Date().addingTimeInterval(5)
+    while !done, Date() < end { RunLoop.main.run(until: Date().addingTimeInterval(0.1)) }
+    return pixels
+}
+if (view.value(forKey: "debugState") as? String ?? "").contains("riders=0") {
+    let first = snapshot(tourView)
+    RunLoop.main.run(until: Date().addingTimeInterval(4))
+    let second = snapshot(tourView)
+    let changed = zip(first, second).filter { abs(Int($0) - Int($1)) > 20 }.count
+    let share = Double(changed) / Double(max(1, first.count))
+    print(String(format: "globe spin: %.1f%% of the picture changed in 4 s", share * 100))
+    guard !first.isEmpty, share > 0.01 else { fatalError("The globe did not turn with nobody live") }
+} else {
+    print("riders are live: skipping the globe spin check")
+}
+
+// A live stream arrives as a MediaStream on a <video> that autoplays with no
+// click. Check, with the screensaver's own web view settings, that such a
+// video starts playing and is muted.
 guard let webView = findWebView(view) else { fatalError("No web view") }
 webView.loadHTMLString("""
 <canvas id=c width=64 height=64></canvas><video id=v autoplay playsinline></video>

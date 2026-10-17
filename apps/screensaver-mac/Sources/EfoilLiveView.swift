@@ -3,13 +3,17 @@ import ScreenSaver
 import WebKit
 
 /// A macOS screensaver that shows the eFoil Racing live view
-/// (riders broadcasting their rides) full screen, in the page's TV mode which
-/// spotlights each live rider in turn. When nobody is live it plays random
+/// (riders broadcasting their rides) full screen, as the page's tour: the
+/// camera flies from rider to rider, and spins the globe when nobody is live. When nobody is live it plays random
 /// clips of the podcast, with sponsor overlays, if a podcast folder is set.
 @objc(EfoilLiveView)
 final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
 
-    static let defaultURL = "https://api.efoilracing.nl/live?tv=1"
+    // tour=30: fly to each live rider and stay 30 s; tv=1: large type, no
+    // buttons, menu or cursor, which a screensaver has no use for.
+    static let defaultURL = "https://api.efoilracing.nl/live?tv=1&tour=30"
+    /// Earlier defaults; a saved one of these follows the current default.
+    static let oldDefaultURLs = ["https://api.efoilracing.nl/live", "https://api.efoilracing.nl/live?tv=1"]
     static let defaultReloadMinutes = 30
 
     private enum Mode: String { case globe, podcast }
@@ -50,7 +54,8 @@ final class EfoilLiveView: ScreenSaverView, WKNavigationDelegate {
     }
 
     private var pageURL: URL {
-        let string = Self.defaults.string(forKey: "url") ?? Self.defaultURL
+        var string = Self.defaults.string(forKey: "url") ?? Self.defaultURL
+        if Self.oldDefaultURLs.contains(string) { string = Self.defaultURL }
         return URL(string: string) ?? URL(string: Self.defaultURL)!
     }
 
